@@ -15,5 +15,5 @@ const generateVideoData = (count: number) => {
 };
 
 export const manifest = {
-  videos: generateVideoData(8),
+  videos: generateVideoData(6),
 };
