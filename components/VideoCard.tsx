@@ -1,4 +1,8 @@
+"use client";
+
+import { useOnInView } from "react-intersection-observer";
 import { Video } from "../types/Video";
+import { useRef } from "react";
 
 const Overlay = () => {
   return (
@@ -12,17 +16,37 @@ const Overlay = () => {
   );
 };
 
-const VideoCard = ({ video }: { video: Video }) => {
+type VideoCardProps = {
+  video: Video;
+};
+
+const VideoCard = ({ video }: VideoCardProps) => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  const inViewRef = useOnInView(
+    (inView) => {
+      if (!videoRef.current) return;
+
+      if (inView) {
+        videoRef.current.play();
+      } else {
+        videoRef.current.pause();
+        videoRef.current.currentTime = 0;
+      }
+    },
+    { threshold: 0.7 }, // must be at least 70% visible to count
+  );
+
   return (
-    <div className="h-screen snap-start">
+    <div className="h-screen snap-start snap-always" ref={inViewRef}>
       <Overlay />
       <video
+        ref={videoRef}
         className="w-full h-full object-cover"
-        controls
         src={video.url}
-        autoPlay
         muted
         loop
+        playsInline
       />
     </div>
   );
