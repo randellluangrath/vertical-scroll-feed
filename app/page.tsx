@@ -1,4 +1,4 @@
-import VideoFeed from "@/components/VideoFeed";
+import VideoFeed from "@/components/feed/VideoFeed";
 
 export default function Home() {
   return (
