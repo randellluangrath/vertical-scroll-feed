@@ -1,0 +1,20 @@
+{
+  "expo": {
+    "name": "GoodWatch TV",
+    "slug": "goodwatch-tv",
+    "version": "0.1.0",
+    "orientation": "landscape",
+    "platforms": ["ios"],
+    "ios": {
+      "supportsTablet": true,
+      "isTV": true,
+      "bundleIdentifier": "com.goodwatch.tv",
+      "infoPlist": {
+        "UIRequiredDeviceCapabilities": ["arm64"]
+      }
+    },
+    "extra": {
+      "apiBaseUrl": "http://localhost:3001"
+    }
+  }
+}

@@ -6,7 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:tv": "cd apps/tv && npm start",
+    "install:all": "npm install && cd backend && npm install && cd ../apps/tv && npm install"
   },
   "dependencies": {
     "@faker-js/faker": "^9.9.0",
