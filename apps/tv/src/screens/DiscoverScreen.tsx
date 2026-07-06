@@ -1,9 +1,11 @@
 // DiscoverScreen — the vertical swipe feed, one full-viewport video per card.
 //
-// Viewport fit + snap: cards are sized to the *measured* height of the list
-// container (onLayout), not Dimensions.get("window") — the two can disagree
-// on tvOS, which is what lets a sliver of the next card leak in. snapToInterval
-// with that same measured height locks every scroll settle to a card boundary.
+// Viewport fit: cards are sized to the *measured* height of the list container
+// (onLayout), not Dimensions.get("window") — the two can disagree on tvOS,
+// which is what lets a sliver of the next card leak in. With cards exactly
+// viewport-sized, the tvOS focus engine's own scroll-to-reveal aligns each
+// card perfectly. Do NOT add snapToInterval here: snap logic fights the focus
+// engine's scroll and freezes the feed.
 import React, { useCallback, useRef, useState } from "react";
 import {
   View,
@@ -40,7 +42,9 @@ export function DiscoverScreen() {
 
   const onContainerLayout = useCallback((e: LayoutChangeEvent) => {
     const h = e.nativeEvent.layout.height;
-    if (h > 0) setViewportHeight(h);
+    // Ignore sub-pixel layout jitter — a state change here re-renders every
+    // card, and video players flicker when torn down needlessly.
+    setViewportHeight((prev) => (h > 0 && Math.abs(h - prev) > 1 ? h : prev));
   }, []);
 
   const viewabilityConfig = useRef({ itemVisiblePercentThreshold: 60 });
@@ -102,16 +106,14 @@ export function DiscoverScreen() {
           offset: viewportHeight * index,
           index,
         })}
-        // Snap every settle to a card boundary — no partial cards.
-        snapToInterval={viewportHeight}
-        snapToAlignment="start"
-        decelerationRate="fast"
-        disableIntervalMomentum
         showsVerticalScrollIndicator={false}
         onViewableItemsChanged={onViewableItemsChanged}
         viewabilityConfig={viewabilityConfig.current}
-        // Re-mount when rail/genre or measured height changes so layout stays exact.
-        key={`${rail}-${genre ?? "all"}-${viewportHeight}`}
+        // Remount only on rail/genre change (new result set, focus resets to
+        // the first card). Height changes flow through extraData — a key
+        // change here would tear down every video player mid-play (flicker).
+        key={`${rail}-${genre ?? "all"}`}
+        extraData={viewportHeight}
         initialNumToRender={2}
         maxToRenderPerBatch={2}
         windowSize={3}

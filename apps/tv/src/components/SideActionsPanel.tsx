@@ -12,6 +12,8 @@ type Props = {
   liked: boolean;
   onLike: () => void;
   rating: number;
+  reviewCount: number;
+  onOpenReviews: () => void;
   saved: boolean;
   onSave: () => void;
 };
@@ -27,6 +29,8 @@ export function SideActionsPanel({
   liked,
   onLike,
   rating,
+  reviewCount,
+  onOpenReviews,
   saved,
   onSave,
 }: Props) {
@@ -41,12 +45,20 @@ export function SideActionsPanel({
         accessibilityLabel={liked ? "Unlike" : "Like"}
       />
       <ActionButton
+        icon="💬"
+        label={`${reviewCount}`}
+        active={false}
+        activeColor={colors.textPrimary}
+        onPress={onOpenReviews}
+        accessibilityLabel={`Read ${reviewCount} reviews`}
+      />
+      <ActionButton
         icon="★"
         label={rating.toFixed(1)}
         active={false}
         activeColor={colors.rating}
-        onPress={() => {}}
-        accessibilityLabel={`Rating ${rating.toFixed(1)}`}
+        onPress={onOpenReviews}
+        accessibilityLabel={`Rating ${rating.toFixed(1)}, read reviews`}
       />
       <ActionButton
         icon={saved ? "⊕" : "+"}

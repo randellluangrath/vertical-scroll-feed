@@ -21,6 +21,7 @@ import { Video as AVVideo, ResizeMode, AVPlaybackStatus } from "expo-av";
 import { LinearGradient } from "expo-linear-gradient";
 import { ContentSummary } from "../api/client";
 import { SideActionsPanel } from "./SideActionsPanel";
+import { ReviewsSheet } from "./ReviewsSheet";
 
 const { width: W } = Dimensions.get("window");
 
@@ -38,23 +39,25 @@ export function VideoCard({ content, height, isActive, hasTVPreferredFocus, onPr
 
   const [liked, setLiked] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [reviewsOpen, setReviewsOpen] = useState(false);
 
   // Drive play/pause from parent-controlled isActive flag.
-  // isActive is set via FlatList onViewableItemsChanged — same pattern as web's useInView.
+  // isActive is set via FlatList onViewableItemsChanged — same pattern as web's
+  // useInView. Pause only — resetting position while the card is still
+  // partially on screen causes a visible frame-jump flicker.
   useEffect(() => {
     if (!videoRef.current) return;
-    if (isActive) {
+    if (isActive && !reviewsOpen) {
       videoRef.current.playAsync().catch(() => {});
     } else {
       videoRef.current.pauseAsync().catch(() => {});
-      videoRef.current.setPositionAsync(0).catch(() => {});
     }
-  }, [isActive]);
+  }, [isActive, reviewsOpen]);
 
   // Remote control events for the focused card.
   // On tvOS, useTVEventHandler fires for the currently focused element.
   useTVEventHandler(useCallback((event) => {
-    if (!isActive) return;
+    if (!isActive || reviewsOpen) return;
     if (event.eventType === "select") {
       // Short press → play/pause toggle
       videoRef.current?.getStatusAsync().then((status: AVPlaybackStatus) => {
@@ -69,7 +72,7 @@ export function VideoCard({ content, height, isActive, hasTVPreferredFocus, onPr
     if (event.eventType === "longSelect") {
       setLiked((l) => !l);
     }
-  }, [isActive]));
+  }, [isActive, reviewsOpen]));
 
   return (
     <View style={[styles.card, { height }]}>
@@ -141,9 +144,16 @@ export function VideoCard({ content, height, isActive, hasTVPreferredFocus, onPr
         liked={liked}
         onLike={() => setLiked((l) => !l)}
         rating={content.rating}
+        reviewCount={content.reviews.length}
+        onOpenReviews={() => setReviewsOpen(true)}
         saved={saved}
         onSave={() => setSaved((s) => !s)}
       />
+
+      {/* Reviews sheet — community reactions, comments-section style */}
+      {reviewsOpen && (
+        <ReviewsSheet content={content} onClose={() => setReviewsOpen(false)} />
+      )}
     </View>
   );
 }

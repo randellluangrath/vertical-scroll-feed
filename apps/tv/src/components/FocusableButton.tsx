@@ -1,22 +1,23 @@
 // Thin wrapper around TouchableHighlight that:
 // - applies a visible focus ring on tvOS (the platform focus engine handles hover)
 // - forwards all standard Touchable props
-// - defaults to an accessible label for the TV focus engine's speech
+//
+// Note on underlayColor: on tvOS, TouchableHighlight shows the underlay while
+// FOCUSED, not just while pressed. The default suits dark/translucent buttons;
+// light-filled buttons (e.g. the white primary CTA) must pass a light
+// underlay or they flash dark on focus.
 import React, { useState } from "react";
-import {
-  TouchableHighlight,
-  TouchableHighlightProps,
-  View,
-  StyleSheet,
-} from "react-native";
+import { TouchableHighlight, TouchableHighlightProps, View } from "react-native";
 
 type Props = TouchableHighlightProps & {
   focusBorderColor?: string;
+  underlayColor?: string;
 };
 
 export function FocusableButton({
   children,
   focusBorderColor = "#ffffff",
+  underlayColor = "rgba(255,255,255,0.15)",
   style,
   ...rest
 }: Props) {
@@ -25,8 +26,15 @@ export function FocusableButton({
   return (
     <TouchableHighlight
       {...rest}
-      style={[style, focused && { borderColor: focusBorderColor, borderWidth: 3, borderRadius: 8 }]}
-      underlayColor="rgba(255,255,255,0.15)"
+      style={[
+        style,
+        focused && {
+          borderColor: focusBorderColor,
+          borderWidth: 3,
+          borderRadius: 8,
+        },
+      ]}
+      underlayColor={underlayColor}
       onFocus={(e) => {
         setFocused(true);
         rest.onFocus?.(e);
@@ -40,5 +48,3 @@ export function FocusableButton({
     </TouchableHighlight>
   );
 }
-
-const styles = StyleSheet.create({});

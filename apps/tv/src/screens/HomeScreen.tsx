@@ -21,6 +21,7 @@ import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useContent } from "../hooks/useContent";
 import { ContentRail } from "../components/ContentRail";
+import { DiscoverBanner } from "../components/DiscoverBanner";
 import { FocusableButton } from "../components/FocusableButton";
 import type { RootStackParamList } from "../navigation/RootNavigator";
 import { colors, spacing, radii, type as typeScale } from "../theme/tokens";
@@ -133,16 +134,10 @@ export function HomeScreen() {
                   hasTVPreferredFocus
                   style={styles.primaryButton}
                   focusBorderColor={colors.brandStrong}
+                  underlayColor="#EDEDF7"
                   accessibilityLabel={`Watch ${hero.title} now`}
                 >
                   <Text style={styles.primaryButtonLabel}>▶  Watch Now</Text>
-                </FocusableButton>
-                <FocusableButton
-                  onPress={openDiscover}
-                  style={styles.secondaryButton}
-                  accessibilityLabel="Open the Discover feed"
-                >
-                  <Text style={styles.secondaryButtonLabel}>Discover</Text>
                 </FocusableButton>
               </View>
             </View>
@@ -155,6 +150,10 @@ export function HomeScreen() {
           items={trending.content}
           onSelect={openPlayer}
         />
+
+        {/* Discover gets its own section — it's a destination, not a hero CTA */}
+        <DiscoverBanner onPress={openDiscover} />
+
         <ContentRail
           title="For You"
           items={forYou.content}
@@ -283,19 +282,6 @@ const styles = StyleSheet.create({
     color: "#000000",
     fontSize: typeScale.body,
     fontWeight: "800",
-  },
-  secondaryButton: {
-    backgroundColor: colors.chipBg,
-    borderRadius: radii.md,
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.chipBorder,
-  },
-  secondaryButtonLabel: {
-    color: colors.textPrimary,
-    fontSize: typeScale.body,
-    fontWeight: "700",
   },
   loadingText: {
     color: colors.textTertiary,
