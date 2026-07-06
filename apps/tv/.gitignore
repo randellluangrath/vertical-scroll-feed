@@ -1,0 +1,12 @@
+# Dependencies
+node_modules/
+
+# Expo
+.expo/
+
+# Generated native projects (Expo prebuild / CNG — regenerate with npm run prebuild)
+ios/
+android/
+
+# Metro
+.metro-health-check*

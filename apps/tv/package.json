@@ -4,8 +4,9 @@
   "private": true,
   "main": "index.js",
   "scripts": {
-    "start": "expo start --platform tvos",
-    "ios": "expo run:ios --scheme GoodWatchTV",
+    "start": "EXPO_TV=1 expo start",
+    "prebuild": "EXPO_TV=1 expo prebuild --clean",
+    "ios": "EXPO_TV=1 expo run:ios",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -22,6 +23,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.25.0",
+    "@react-native-tvos/config-tv": "^0.1.1",
     "@types/react": "~18.3.12",
     "typescript": "^5.3.3"
   }

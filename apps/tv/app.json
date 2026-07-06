@@ -6,13 +6,16 @@
     "orientation": "landscape",
     "platforms": ["ios"],
     "ios": {
-      "supportsTablet": true,
-      "isTV": true,
-      "bundleIdentifier": "com.goodwatch.tv",
-      "infoPlist": {
-        "UIRequiredDeviceCapabilities": ["arm64"]
-      }
+      "bundleIdentifier": "com.goodwatch.tv"
     },
+    "plugins": [
+      [
+        "@react-native-tvos/config-tv",
+        {
+          "isTV": true
+        }
+      ]
+    ],
     "extra": {
       "apiBaseUrl": "http://localhost:3001"
     }
