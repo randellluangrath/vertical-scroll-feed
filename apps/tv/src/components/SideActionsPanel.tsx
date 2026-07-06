@@ -1,10 +1,11 @@
 // Vertical panel of action buttons on the right edge of each VideoCard.
-// Accessible via D-pad RIGHT from the main card surface.
-// Each button is independently focusable and activatable with SELECT.
-// D-pad LEFT from any button here returns focus to the card (via nextFocusLeft).
-import React, { forwardRef } from "react";
+// tvOS's geometric focus engine moves focus here on D-pad RIGHT from the
+// card surface, and back on D-pad LEFT — no explicit wiring needed
+// (nextFocus* props are Android TV APIs and don't exist on tvOS).
+import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { FocusableButton } from "./FocusableButton";
+import { colors, spacing, type as typeScale } from "../theme/tokens";
 
 type Props = {
   likes: number;
@@ -13,8 +14,6 @@ type Props = {
   rating: number;
   saved: boolean;
   onSave: () => void;
-  onFocusChange: (focused: boolean) => void;
-  nextFocusLeft?: number | null;
 };
 
 function compactNumber(n: number): string {
@@ -23,59 +22,51 @@ function compactNumber(n: number): string {
   return `${(n / 1_000_000).toFixed(1).replace(/\.0$/, "")}M`;
 }
 
-export const SideActionsPanel = forwardRef<View, Props>(function SideActionsPanel(
-  { likes, liked, onLike, rating, saved, onSave, onFocusChange, nextFocusLeft },
-  ref,
-) {
+export function SideActionsPanel({
+  likes,
+  liked,
+  onLike,
+  rating,
+  saved,
+  onSave,
+}: Props) {
   return (
-    <View ref={ref} style={styles.panel} pointerEvents="box-none">
+    <View style={styles.panel} pointerEvents="box-none">
       <ActionButton
         icon={liked ? "♥" : "♡"}
         label={compactNumber(likes + (liked ? 1 : 0))}
         active={liked}
-        activeColor="#f43f5e"
+        activeColor={colors.like}
         onPress={onLike}
-        onFocus={() => onFocusChange(true)}
-        onBlur={() => onFocusChange(false)}
-        nextFocusLeft={nextFocusLeft}
         accessibilityLabel={liked ? "Unlike" : "Like"}
       />
       <ActionButton
         icon="★"
         label={rating.toFixed(1)}
         active={false}
-        activeColor="#fbbf24"
+        activeColor={colors.rating}
         onPress={() => {}}
-        onFocus={() => onFocusChange(true)}
-        onBlur={() => onFocusChange(false)}
-        nextFocusLeft={nextFocusLeft}
         accessibilityLabel={`Rating ${rating.toFixed(1)}`}
       />
       <ActionButton
         icon={saved ? "⊕" : "+"}
         label={saved ? "Saved" : "My List"}
         active={saved}
-        activeColor="#6366f1"
+        activeColor={colors.brand}
         onPress={onSave}
-        onFocus={() => onFocusChange(true)}
-        onBlur={() => onFocusChange(false)}
-        nextFocusLeft={nextFocusLeft}
         accessibilityLabel={saved ? "Remove from list" : "Add to list"}
       />
       <ActionButton
         icon="⇧"
         label="Share"
         active={false}
-        activeColor="#fff"
+        activeColor={colors.textPrimary}
         onPress={() => {}}
-        onFocus={() => onFocusChange(true)}
-        onBlur={() => onFocusChange(false)}
-        nextFocusLeft={nextFocusLeft}
         accessibilityLabel="Share"
       />
     </View>
   );
-});
+}
 
 type ActionButtonProps = {
   icon: string;
@@ -83,9 +74,6 @@ type ActionButtonProps = {
   active: boolean;
   activeColor: string;
   onPress: () => void;
-  onFocus: () => void;
-  onBlur: () => void;
-  nextFocusLeft?: number | null;
   accessibilityLabel: string;
 };
 
@@ -95,18 +83,12 @@ function ActionButton({
   active,
   activeColor,
   onPress,
-  onFocus,
-  onBlur,
-  nextFocusLeft,
   accessibilityLabel,
 }: ActionButtonProps) {
   return (
     <FocusableButton
       style={styles.button}
       onPress={onPress}
-      onFocus={onFocus}
-      onBlur={onBlur}
-      nextFocusLeft={nextFocusLeft ?? undefined}
       accessibilityLabel={accessibilityLabel}
     >
       <View style={styles.buttonInner}>
@@ -120,7 +102,7 @@ function ActionButton({
 const styles = StyleSheet.create({
   panel: {
     position: "absolute",
-    right: 40,
+    right: spacing.xl,
     bottom: 100,
     alignItems: "center",
     gap: 28,
@@ -133,7 +115,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   icon: {
-    color: "#ffffff",
+    color: colors.textPrimary,
     fontSize: 32,
     lineHeight: 36,
     textShadowColor: "rgba(0,0,0,0.6)",
@@ -141,8 +123,8 @@ const styles = StyleSheet.create({
     textShadowRadius: 4,
   },
   buttonLabel: {
-    color: "#ffffff",
-    fontSize: 14,
+    color: colors.textPrimary,
+    fontSize: typeScale.small,
     fontWeight: "600",
     textShadowColor: "rgba(0,0,0,0.6)",
     textShadowOffset: { width: 0, height: 1 },

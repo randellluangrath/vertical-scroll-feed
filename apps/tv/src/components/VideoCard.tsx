@@ -1,17 +1,13 @@
 // TV-adapted VideoCard.
 //
 // Web-to-TV mapping:
-//   useInView (intersection observer)  →  onFocus / onBlur on TouchableHighlight
+//   useInView (intersection observer)  →  isActive from onViewableItemsChanged
 //   double-tap like                    →  long-press SELECT (via useTVEventHandler)
 //   tap play/pause                     →  short SELECT press (isActive card)
-//   swipe-right side actions           →  D-pad RIGHT to SideActionsPanel (nextFocusRight)
+//   swipe-right side actions           →  D-pad RIGHT (tvOS geometric focus engine
+//                                         moves focus to the panel automatically —
+//                                         nextFocus* props are Android TV only)
 //   bottom overlay text                →  same, scaled up for 2m viewing distance
-//
-// Focus model:
-//   The card itself is the primary focusable element in the FlatList.
-//   When it receives focus, video plays. When it loses focus, video pauses.
-//   Pressing D-pad RIGHT moves focus into the SideActionsPanel (via ref + nextFocusRight).
-//   Pressing D-pad LEFT from the panel returns focus to the card.
 import React, { useRef, useState, useEffect, useCallback } from "react";
 import {
   View,
@@ -19,32 +15,29 @@ import {
   TouchableHighlight,
   StyleSheet,
   Dimensions,
-  findNodeHandle,
   useTVEventHandler,
-  TVEventControl,
 } from "react-native";
 import { Video as AVVideo, ResizeMode, AVPlaybackStatus } from "expo-av";
 import { LinearGradient } from "expo-linear-gradient";
 import { ContentSummary } from "../api/client";
 import { SideActionsPanel } from "./SideActionsPanel";
 
-const { width: W, height: H } = Dimensions.get("window");
+const { width: W } = Dimensions.get("window");
 
 type Props = {
   content: ContentSummary;
+  /** Exact card height — the Discover screen passes its measured viewport. */
+  height: number;
   isActive: boolean;
   hasTVPreferredFocus?: boolean;
   onPress: () => void;
 };
 
-export function VideoCard({ content, isActive, hasTVPreferredFocus, onPress }: Props) {
+export function VideoCard({ content, height, isActive, hasTVPreferredFocus, onPress }: Props) {
   const videoRef = useRef<AVVideo>(null);
-  const cardRef = useRef<TouchableHighlight>(null);
-  const panelRef = useRef<View>(null);
 
   const [liked, setLiked] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [panelFocused, setPanelFocused] = useState(false);
 
   // Drive play/pause from parent-controlled isActive flag.
   // isActive is set via FlatList onViewableItemsChanged — same pattern as web's useInView.
@@ -79,7 +72,7 @@ export function VideoCard({ content, isActive, hasTVPreferredFocus, onPress }: P
   }, [isActive]));
 
   return (
-    <View style={styles.card}>
+    <View style={[styles.card, { height }]}>
       {/* Gradient fallback — shown while video loads */}
       <LinearGradient
         colors={content.gradient as [string, string]}
@@ -130,15 +123,13 @@ export function VideoCard({ content, isActive, hasTVPreferredFocus, onPress }: P
         </View>
       </LinearGradient>
 
-      {/* Primary focusable surface — fills the card.
-          nextFocusRight wires D-pad RIGHT to the side actions panel. */}
+      {/* Primary focusable surface — fills the card. tvOS's geometric focus
+          engine handles D-pad RIGHT into the side actions panel on its own. */}
       <TouchableHighlight
-        ref={cardRef}
         style={StyleSheet.absoluteFill}
         underlayColor="transparent"
         hasTVPreferredFocus={hasTVPreferredFocus}
         onPress={onPress}
-        nextFocusRight={findNodeHandle(panelRef.current) ?? undefined}
         accessibilityLabel={`${content.title}. ${content.tagline}`}
       >
         <View style={styles.invisible} />
@@ -146,15 +137,12 @@ export function VideoCard({ content, isActive, hasTVPreferredFocus, onPress }: P
 
       {/* Side actions panel — D-pad RIGHT from card focuses this */}
       <SideActionsPanel
-        ref={panelRef}
         likes={content.likes}
         liked={liked}
         onLike={() => setLiked((l) => !l)}
         rating={content.rating}
         saved={saved}
         onSave={() => setSaved((s) => !s)}
-        onFocusChange={setPanelFocused}
-        nextFocusLeft={findNodeHandle(cardRef.current) ?? undefined}
       />
     </View>
   );
@@ -163,7 +151,6 @@ export function VideoCard({ content, isActive, hasTVPreferredFocus, onPress }: P
 const styles = StyleSheet.create({
   card: {
     width: W,
-    height: H,
     backgroundColor: "#000",
     overflow: "hidden",
   },

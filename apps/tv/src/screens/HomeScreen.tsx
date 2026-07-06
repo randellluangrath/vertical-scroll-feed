@@ -1,75 +1,65 @@
-// HomeScreen — vertical scroll discovery feed, TV-adapted.
+// HomeScreen — the landing page. Canonical 10-foot layout:
+//   brand bar → hero (featured title, full-bleed art, primary CTAs) → rails.
 //
-// Web pattern:           TV pattern:
-// scroll container       FlatList (vertical, full-screen items)
-// useInView hook      →  onViewableItemsChanged (60% threshold)
-// intersection play   →  isActive prop drives play/pause per card
-// genre chip bar      →  DiscoveryBar overlay (focusable, D-pad up from feed)
+// The Discover vertical feed is reachable from the hero's second CTA —
+// it's an exploration surface now, not the front door.
 //
-// The D-pad up/down on the remote navigates between VideoCard items.
-// React Native's FlatList scrolls the list to keep the focused item in view.
-// pagingEnabled is NOT used — instead each item is exactly SCREEN_HEIGHT tall
-// and getItemLayout tells FlatList the size without measuring. This makes
-// scrolling smooth and avoids the layout jank that pagingEnabled can cause on tvOS.
-import React, { useCallback, useRef, useState } from "react";
+// Focus flow: "Watch Now" gets initial focus. D-pad right → "Discover".
+// D-pad down → Trending rail → For You rail. Left/right within a rail.
+import React, { useCallback } from "react";
 import {
   View,
-  FlatList,
-  Dimensions,
-  StyleSheet,
   Text,
-  ViewToken,
+  ScrollView,
+  Image,
+  StyleSheet,
+  Dimensions,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
+import { LinearGradient } from "expo-linear-gradient";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useContent } from "../hooks/useContent";
-import { VideoCard } from "../components/VideoCard";
-import { DiscoveryBar } from "../components/DiscoveryBar";
+import { ContentRail } from "../components/ContentRail";
+import { FocusableButton } from "../components/FocusableButton";
 import type { RootStackParamList } from "../navigation/RootNavigator";
-import { ContentSummary } from "../api/client";
+import { colors, spacing, radii, type as typeScale } from "../theme/tokens";
 
-const { height: H } = Dimensions.get("window");
+const { height: SCREEN_H } = Dimensions.get("window");
 
 type Nav = NativeStackNavigationProp<RootStackParamList, "Home">;
 
 export function HomeScreen() {
   const navigation = useNavigation<Nav>();
-  const [rail, setRail] = useState<"for-you" | "trending">("for-you");
-  const [genre, setGenre] = useState<string | null>(null);
-  const [activeIndex, setActiveIndex] = useState(0);
+  const trending = useContent({ rail: "trending", genre: null });
+  const forYou = useContent({ rail: "for-you", genre: null });
 
-  const { content, loading, error } = useContent({ rail, genre });
-
-  // Identify which card is visible (60% threshold → same as web's useInView threshold: 0.6).
-  const viewabilityConfig = useRef({ itemVisiblePercentThreshold: 60 });
-  const onViewableItemsChanged = useCallback(
-    ({ viewableItems }: { viewableItems: ViewToken[] }) => {
-      if (viewableItems.length > 0) {
-        setActiveIndex(viewableItems[0].index ?? 0);
-      }
-    },
-    [],
+  const openPlayer = useCallback(
+    (contentId: string) => navigation.navigate("Player", { contentId }),
+    [navigation],
   );
-
-  const handlePress = useCallback(
-    (id: string) => {
-      navigation.navigate("Player", { contentId: id });
-    },
+  const openDiscover = useCallback(
+    () => navigation.navigate("Discover"),
     [navigation],
   );
 
-  if (loading) {
+  if (trending.loading || forYou.loading) {
     return (
       <View style={styles.center}>
+        <Text style={styles.brandMark}>
+          Good<Text style={styles.brandAccent}>Watch</Text>
+        </Text>
         <Text style={styles.loadingText}>Loading…</Text>
       </View>
     );
   }
 
-  if (error) {
+  if (trending.error || forYou.error) {
     return (
       <View style={styles.center}>
+        <Text style={styles.brandMark}>
+          Good<Text style={styles.brandAccent}>Watch</Text>
+        </Text>
         <Text style={styles.errorText}>
           Could not connect to the API.{"\n"}
           Start the backend: cd backend && npm run dev
@@ -78,46 +68,99 @@ export function HomeScreen() {
     );
   }
 
-  const genres = [...new Set(content.flatMap((c) => c.genres))];
+  const hero = trending.content[0] ?? forYou.content[0];
 
   return (
     <View style={styles.container}>
       <StatusBar hidden />
-
-      <FlatList<ContentSummary>
-        data={content}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item, index }) => (
-          <VideoCard
-            content={item}
-            isActive={index === activeIndex}
-            hasTVPreferredFocus={index === 0}
-            onPress={() => handlePress(item.id)}
-          />
-        )}
-        // Each item is exactly one screen tall — no layout pass needed.
-        getItemLayout={(_, index) => ({
-          length: H,
-          offset: H * index,
-          index,
-        })}
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
-        onViewableItemsChanged={onViewableItemsChanged}
-        viewabilityConfig={viewabilityConfig.current}
-        // Re-mount the list when rail/genre changes so the first item gets focus.
-        key={`${rail}-${genre ?? "all"}`}
-        initialNumToRender={2}
-        maxToRenderPerBatch={2}
-        windowSize={3}
-      />
+      >
+        {/* Brand bar */}
+        <View style={styles.brandBar}>
+          <Text style={styles.brandMark}>
+            Good<Text style={styles.brandAccent}>Watch</Text>
+          </Text>
+          <Text style={styles.brandTagline}>discover before you commit</Text>
+        </View>
 
-      <DiscoveryBar
-        rail={rail}
-        onRailChange={setRail}
-        genres={genres}
-        activeGenre={genre}
-        onGenreChange={setGenre}
-      />
+        {/* Hero */}
+        {hero && (
+          <View style={styles.hero}>
+            <LinearGradient
+              colors={hero.gradient}
+              style={StyleSheet.absoluteFill}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+            />
+            {hero.thumbnailUrl && (
+              <Image
+                source={{ uri: hero.thumbnailUrl }}
+                style={StyleSheet.absoluteFill}
+                resizeMode="cover"
+              />
+            )}
+            {/* Left-to-right scrim keeps hero text legible over the art */}
+            <LinearGradient
+              colors={[colors.overlayStrong, colors.overlaySoft, "transparent"]}
+              start={{ x: 0, y: 0.5 }}
+              end={{ x: 1, y: 0.5 }}
+              style={StyleSheet.absoluteFill}
+            />
+            <LinearGradient
+              colors={["transparent", colors.background]}
+              style={styles.heroBottomFade}
+            />
+
+            <View style={styles.heroContent}>
+              <View style={styles.heroMetaLine}>
+                <Text style={styles.heroMatch}>{hero.matchPercent}% match</Text>
+                <Text style={styles.heroBadge}>{hero.maturity}</Text>
+                <Text style={styles.heroMetaText}>{hero.year}</Text>
+                <Text style={styles.heroMetaText}>★ {hero.rating.toFixed(1)}</Text>
+              </View>
+              <Text style={styles.heroTitle}>{hero.title}</Text>
+              <Text style={styles.heroTagline}>{hero.tagline}</Text>
+              <Text style={styles.heroSynopsis} numberOfLines={2}>
+                {hero.synopsis}
+              </Text>
+
+              <View style={styles.heroActions}>
+                <FocusableButton
+                  onPress={() => openPlayer(hero.id)}
+                  hasTVPreferredFocus
+                  style={styles.primaryButton}
+                  focusBorderColor={colors.brandStrong}
+                  accessibilityLabel={`Watch ${hero.title} now`}
+                >
+                  <Text style={styles.primaryButtonLabel}>▶  Watch Now</Text>
+                </FocusableButton>
+                <FocusableButton
+                  onPress={openDiscover}
+                  style={styles.secondaryButton}
+                  accessibilityLabel="Open the Discover feed"
+                >
+                  <Text style={styles.secondaryButtonLabel}>Discover</Text>
+                </FocusableButton>
+              </View>
+            </View>
+          </View>
+        )}
+
+        {/* Rails */}
+        <ContentRail
+          title="Trending Now"
+          items={trending.content}
+          onSelect={openPlayer}
+        />
+        <ContentRail
+          title="For You"
+          items={forYou.content}
+          onSelect={openPlayer}
+        />
+      </ScrollView>
     </View>
   );
 }
@@ -125,22 +168,142 @@ export function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#000",
+    backgroundColor: colors.background,
+  },
+  scroll: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: spacing.xxl,
   },
   center: {
     flex: 1,
-    backgroundColor: "#000",
+    backgroundColor: colors.background,
     alignItems: "center",
     justifyContent: "center",
-    padding: 60,
+    padding: spacing.xxl,
+    gap: spacing.md,
+  },
+  brandBar: {
+    flexDirection: "row",
+    alignItems: "baseline",
+    gap: spacing.md,
+    paddingHorizontal: spacing.xxl,
+    paddingTop: spacing.xl,
+    paddingBottom: spacing.lg,
+  },
+  brandMark: {
+    color: colors.textPrimary,
+    fontSize: typeScale.heading,
+    fontWeight: "900",
+    letterSpacing: -1,
+  },
+  brandAccent: {
+    color: colors.brandStrong,
+  },
+  brandTagline: {
+    color: colors.textTertiary,
+    fontSize: typeScale.caption,
+    fontWeight: "500",
+  },
+  hero: {
+    height: SCREEN_H * 0.52,
+    justifyContent: "flex-end",
+    overflow: "hidden",
+    marginBottom: spacing.xl,
+  },
+  heroBottomFade: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 140,
+  },
+  heroContent: {
+    paddingHorizontal: spacing.xxl,
+    paddingBottom: spacing.xl,
+    maxWidth: 900,
+  },
+  heroMetaLine: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.md,
+    marginBottom: spacing.sm,
+  },
+  heroMatch: {
+    color: colors.match,
+    fontSize: typeScale.caption,
+    fontWeight: "700",
+  },
+  heroBadge: {
+    color: colors.textSecondary,
+    fontSize: typeScale.small,
+    borderWidth: 1,
+    borderColor: colors.chipBorder,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: radii.sm,
+    fontWeight: "600",
+  },
+  heroMetaText: {
+    color: colors.textSecondary,
+    fontSize: typeScale.caption,
+  },
+  heroTitle: {
+    color: colors.textPrimary,
+    fontSize: typeScale.hero,
+    fontWeight: "900",
+    letterSpacing: -1.5,
+    lineHeight: typeScale.hero + 6,
+  },
+  heroTagline: {
+    color: colors.textSecondary,
+    fontSize: typeScale.body,
+    fontWeight: "500",
+    marginTop: spacing.xs,
+  },
+  heroSynopsis: {
+    color: colors.textSecondary,
+    fontSize: typeScale.caption,
+    lineHeight: 24,
+    marginTop: spacing.md,
+  },
+  heroActions: {
+    flexDirection: "row",
+    gap: spacing.md,
+    marginTop: spacing.lg,
+  },
+  primaryButton: {
+    backgroundColor: colors.textPrimary,
+    borderRadius: radii.md,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
+  },
+  primaryButtonLabel: {
+    color: "#000000",
+    fontSize: typeScale.body,
+    fontWeight: "800",
+  },
+  secondaryButton: {
+    backgroundColor: colors.chipBg,
+    borderRadius: radii.md,
+    paddingHorizontal: spacing.xl,
+    paddingVertical: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.chipBorder,
+  },
+  secondaryButtonLabel: {
+    color: colors.textPrimary,
+    fontSize: typeScale.body,
+    fontWeight: "700",
   },
   loadingText: {
-    color: "rgba(255,255,255,0.6)",
-    fontSize: 22,
+    color: colors.textTertiary,
+    fontSize: typeScale.body,
   },
   errorText: {
-    color: "rgba(255,255,255,0.7)",
-    fontSize: 20,
+    color: colors.textSecondary,
+    fontSize: typeScale.body,
     textAlign: "center",
     lineHeight: 32,
   },
