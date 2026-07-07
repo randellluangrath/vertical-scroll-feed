@@ -4,10 +4,12 @@
   "private": true,
   "description": "GoodWatch — React Native tvOS app with an AWS Amplify (Gen 2) backend.",
   "scripts": {
-    "sandbox": "ampx sandbox",
-    "sandbox:once": "ampx sandbox --once",
+    "sandbox": "ampx sandbox --outputs-out-dir packages/shared",
+    "sandbox:once": "ampx sandbox --once --outputs-out-dir packages/shared",
     "seed": "ampx sandbox seed",
     "deploy": "ampx pipeline-deploy --branch main --app-id $AMPLIFY_APP_ID",
+    "outputs:sync": "node scripts/amplify-outputs.mjs",
+    "outputs:generate": "node scripts/amplify-outputs.mjs --generate",
     "tv": "cd apps/tv && npm start",
     "tv:ios": "cd apps/tv && npm run ios"
   },

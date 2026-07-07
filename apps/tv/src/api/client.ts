@@ -14,8 +14,6 @@ import type { ContentApi } from "./types";
 
 export type { Content, Review, Rail, Sentiment, ContentFilter } from "./types";
 export type { ContentApi } from "./types";
-import outputs from "../../../../amplify_outputs.json";
-import { Amplify } from "aws-amplify";
 
 // generateClient() is intentionally left untyped here: passing <Schema> would
 // pull @aws-amplify/backend types into the RN app's typecheck, where they don't

@@ -7,8 +7,11 @@
 // client.ts). The require is isolated here so the rest of the app never
 // touches Amplify config.
 import { Amplify } from "aws-amplify";
-// Path: apps/tv/amplify_outputs.json (copied next to the app by
-// `ampx sandbox --outputs-out-dir apps/tv`, or symlinked from the repo root).
+// apps/tv/amplify_outputs.json is a synced copy of the monorepo canonical
+// (packages/shared/amplify_outputs.json). Metro can't resolve the shared file
+// across packages, so each app bundles its own copy. Produce/refresh it with:
+//   npm run sandbox        # writes the canonical to packages/shared
+//   npm run outputs:sync   # copies it here
 import outputs from "../../amplify_outputs.json";
 
 Amplify.configure(outputs);
