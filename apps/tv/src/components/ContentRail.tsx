@@ -27,7 +27,12 @@ type Props = {
   hasTVPreferredFocus?: boolean;
 };
 
-export function ContentRail({ title, items, onSelect, hasTVPreferredFocus }: Props) {
+export function ContentRail({
+  title,
+  items,
+  onSelect,
+  hasTVPreferredFocus,
+}: Props) {
   return (
     <View style={styles.rail}>
       <Text style={styles.railTitle}>{title}</Text>
@@ -116,7 +121,9 @@ function PosterCard({
           <View style={styles.cardMeta}>
             <Text style={styles.cardMatch}>{content.matchPercent}% match</Text>
             <Text style={styles.cardMetaText}>{content.maturity}</Text>
-            <Text style={styles.cardMetaText}>★ {content.rating.toFixed(1)}</Text>
+            <Text style={styles.cardMetaText}>
+              ★ {content.rating.toFixed(1)}
+            </Text>
           </View>
         </LinearGradient>
       </Animated.View>

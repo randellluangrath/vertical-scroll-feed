@@ -34,7 +34,13 @@ type Props = {
   onPress: () => void;
 };
 
-export function VideoCard({ content, height, isActive, hasTVPreferredFocus, onPress }: Props) {
+export function VideoCard({
+  content,
+  height,
+  isActive,
+  hasTVPreferredFocus,
+  onPress,
+}: Props) {
   const videoRef = useRef<AVVideo>(null);
 
   const [liked, setLiked] = useState(false);
@@ -56,23 +62,30 @@ export function VideoCard({ content, height, isActive, hasTVPreferredFocus, onPr
 
   // Remote control events for the focused card.
   // On tvOS, useTVEventHandler fires for the currently focused element.
-  useTVEventHandler(useCallback((event) => {
-    if (!isActive || reviewsOpen) return;
-    if (event.eventType === "select") {
-      // Short press → play/pause toggle
-      videoRef.current?.getStatusAsync().then((status: AVPlaybackStatus) => {
-        if (!status.isLoaded) return;
-        if (status.isPlaying) {
-          videoRef.current?.pauseAsync();
-        } else {
-          videoRef.current?.playAsync();
+  useTVEventHandler(
+    useCallback(
+      (event) => {
+        if (!isActive || reviewsOpen) return;
+        if (event.eventType === "select") {
+          // Short press → play/pause toggle
+          videoRef.current
+            ?.getStatusAsync()
+            .then((status: AVPlaybackStatus) => {
+              if (!status.isLoaded) return;
+              if (status.isPlaying) {
+                videoRef.current?.pauseAsync();
+              } else {
+                videoRef.current?.playAsync();
+              }
+            });
         }
-      });
-    }
-    if (event.eventType === "longSelect") {
-      setLiked((l) => !l);
-    }
-  }, [isActive, reviewsOpen]));
+        if (event.eventType === "longSelect") {
+          setLiked((l) => !l);
+        }
+      },
+      [isActive, reviewsOpen],
+    ),
+  );
 
   return (
     <View style={[styles.card, { height }]}>

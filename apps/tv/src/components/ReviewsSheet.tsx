@@ -45,8 +45,8 @@ export function ReviewsSheet({ content, onClose }: Props) {
           <View>
             <Text style={styles.title}>Reviews</Text>
             <Text style={styles.subtitle}>
-              ★ {content.rating.toFixed(1)} · {content.reviews.length} reviews
-              · {content.title}
+              ★ {content.rating.toFixed(1)} · {content.reviews.length} reviews ·{" "}
+              {content.title}
             </Text>
           </View>
           <FocusableButton

@@ -12,27 +12,29 @@ export function useContent({ rail, genre }: Options) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    let cancelled = false;
+  const loadContent = async (signal: { cancelled: boolean }) => {
     setLoading(true);
+    setError(null);
 
-    api
-      .getContent({ rail, genre: genre ?? undefined })
-      .then((data) => {
-        if (!cancelled) {
-          setContent(data);
-          setLoading(false);
-        }
-      })
-      .catch((err: Error) => {
-        if (!cancelled) {
-          setError(err.message);
-          setLoading(false);
-        }
+    try {
+      const data = await api.getContent({
+        rail,
+        genre: genre ?? undefined,
       });
+      if (!signal.cancelled) setContent(data);
+    } catch (err: unknown) {
+      if (!signal.cancelled)
+        setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      if (!signal.cancelled) setLoading(false);
+    }
+  };
 
+  useEffect(() => {
+    const signal = { cancelled: false };
+    loadContent(signal);
     return () => {
-      cancelled = true;
+      signal.cancelled = true;
     };
   }, [rail, genre]);
 

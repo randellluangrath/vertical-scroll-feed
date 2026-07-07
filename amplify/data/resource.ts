@@ -1,10 +1,3 @@
-// Amplify Gen 2 data schema.
-// Defines AppSync + DynamoDB models for the GoodWatch platform.
-// All apps (web, TV, mobile) share this single backend.
-//
-// To deploy:
-//   cd amplify && npx ampx sandbox       # personal dev cloud
-//   npx ampx pipeline-deploy --branch main  # CI/CD
 import { a, defineData, type ClientSchema } from "@aws-amplify/backend";
 
 const schema = a.schema({

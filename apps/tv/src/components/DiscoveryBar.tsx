@@ -5,13 +5,7 @@
 //  - active chip has a solid white background (high contrast for distance viewing)
 //  - font sizes are ~40% larger (TV sits 2-3m away, not 30cm)
 import React from "react";
-import {
-  View,
-  Text,
-  ScrollView,
-  StyleSheet,
-  TouchableHighlight,
-} from "react-native";
+import { View, Text, ScrollView, StyleSheet } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { FocusableButton } from "./FocusableButton";
 
@@ -56,7 +50,9 @@ export function DiscoveryBar({
               <Text
                 style={[
                   styles.tabLabel,
-                  rail === tab.key ? styles.tabLabelActive : styles.tabLabelInactive,
+                  rail === tab.key
+                    ? styles.tabLabelActive
+                    : styles.tabLabelInactive,
                 ]}
               >
                 {tab.label}
@@ -107,9 +103,7 @@ function Chip({
       style={[styles.chip, active && styles.chipActive]}
       accessibilityLabel={label}
     >
-      <Text
-        style={[styles.chipLabel, active && styles.chipLabelActive]}
-      >
+      <Text style={[styles.chipLabel, active && styles.chipLabelActive]}>
         {label.charAt(0).toUpperCase() + label.slice(1)}
       </Text>
     </FocusableButton>

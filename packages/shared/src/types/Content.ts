@@ -44,7 +44,29 @@ export type Content = {
   reviews: Review[];
 };
 
-export type AllGenres = typeof ALL_GENRES[number];
+export type ContentSummary = {
+  id: string;
+  title: string;
+  tagline: string;
+  synopsis: string;
+  genres: string[];
+  year: number;
+  maturity: string;
+  runtimeMinutes: number;
+  matchPercent: number;
+  cast: string[];
+  streamUrl: string;
+  thumbnailUrl?: string;
+  gradient: [string, string];
+  rails: Rail[];
+  trendingRank?: number;
+  likes: number;
+  views: string;
+  rating: number;
+  reviews: Review[];
+};
+
+export type AllGenres = (typeof ALL_GENRES)[number];
 
 export const ALL_GENRES = [
   "kids",
