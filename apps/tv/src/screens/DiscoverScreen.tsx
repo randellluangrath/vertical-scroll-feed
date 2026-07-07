@@ -75,10 +75,7 @@ export function DiscoverScreen() {
   if (error) {
     return (
       <View style={styles.center}>
-        <Text style={styles.errorText}>
-          Could not connect to the API.{"\n"}
-          Start the backend: cd backend && npm run dev
-        </Text>
+        <Text style={styles.errorText}>{error}</Text>
       </View>
     );
   }

@@ -29,7 +29,6 @@ const schema = a.schema({
     })
     .authorization((allow) => [
       allow.guest().to(["read"]),
-      allow.group("Editors"),
     ]),
 
   Review: a
@@ -46,18 +45,7 @@ const schema = a.schema({
     })
     .authorization((allow) => [
       allow.guest().to(["read"]),
-      // Authenticated users can write their own reviews
-      allow.owner(),
     ]),
-
-  // User watchlist — auth-scoped, not visible to other users.
-  WatchlistItem: a
-    .model({
-      contentId: a.id().required(),
-      userId: a.string().required(),
-      addedAt: a.datetime(),
-    })
-    .authorization((allow) => [allow.owner()]),
 });
 
 export type Schema = ClientSchema<typeof schema>;

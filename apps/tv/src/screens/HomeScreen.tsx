@@ -61,10 +61,7 @@ export function HomeScreen() {
         <Text style={styles.brandMark}>
           Good<Text style={styles.brandAccent}>Watch</Text>
         </Text>
-        <Text style={styles.errorText}>
-          Could not connect to the API.{"\n"}
-          Start the backend: cd backend && npm run dev
-        </Text>
+        <Text style={styles.errorText}>{trending.error ?? forYou.error}</Text>
       </View>
     );
   }
@@ -120,7 +117,9 @@ export function HomeScreen() {
                 <Text style={styles.heroMatch}>{hero.matchPercent}% match</Text>
                 <Text style={styles.heroBadge}>{hero.maturity}</Text>
                 <Text style={styles.heroMetaText}>{hero.year}</Text>
-                <Text style={styles.heroMetaText}>★ {hero.rating.toFixed(1)}</Text>
+                <Text style={styles.heroMetaText}>
+                  ★ {hero.rating.toFixed(1)}
+                </Text>
               </View>
               <Text style={styles.heroTitle}>{hero.title}</Text>
               <Text style={styles.heroTagline}>{hero.tagline}</Text>
@@ -137,7 +136,7 @@ export function HomeScreen() {
                   underlayColor="#EDEDF7"
                   accessibilityLabel={`Watch ${hero.title} now`}
                 >
-                  <Text style={styles.primaryButtonLabel}>▶  Watch Now</Text>
+                  <Text style={styles.primaryButtonLabel}>▶ Watch Now</Text>
                 </FocusableButton>
               </View>
             </View>
