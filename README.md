@@ -1,36 +1,44 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# GoodWatch TV
 
-## Getting Started
+A React Native **tvOS** app for previewing streaming content — a vertical,
+remote-driven "Discover" feed plus a 10-foot landing page — backed by
+**AWS Amplify (Gen 2)**.
 
-First, run the development server:
-
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+```
+apps/tv/          Apple TV app (Expo SDK 52 + react-native-tvos)
+amplify/          Amplify Gen 2 backend (AppSync + DynamoDB + Cognito)
+packages/shared/  Domain types + mock catalog data
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Prerequisites
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- Node 20+, a Mac with Xcode + the tvOS simulator runtime
+- AWS credentials configured (`aws configure` or SSO) for the backend
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Run it
 
-## Learn More
+```bash
+# 1. Install (repo root + app)
+npm install
+cd apps/tv && npm ci && cd ..
 
-To learn more about Next.js, take a look at the following resources:
+# 2. Stand up the cloud backend (provisions AppSync + DynamoDB + Cognito,
+#    generates amplify_outputs.json). Leave running in its own terminal.
+npm run sandbox
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# 3. Seed the catalog — the tables start empty!
+npm run seed
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+# 4. Point the app at the generated config and launch on Apple TV
+#    (ampx writes amplify_outputs.json; place/symlink it at apps/tv/)
+cd apps/tv
+npm run prebuild      # generates the tvOS Xcode project (first run / after native dep changes)
+npm run ios
+```
 
-## Deploy on Vercel
+## Architecture
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+See [ARCHITECTURE.md](./ARCHITECTURE.md). In short: the Amplify Data client is
+the only backend; a mapping layer (`apps/tv/src/api/amplify.ts`) converts
+Amplify's generated shape into clean domain types from `packages/shared`, so the
+UI never sees a nullable/lazy Amplify model.

@@ -1,46 +1,24 @@
-// API entry point — selects a backend and exposes it as `api`.
+// API entry point — the Amplify Data client, mapped to domain types.
 //
-// Every screen/hook imports `{ api }` (and domain types) from here and never
-// knows which backend is live. Swapping REST ↔ Amplify is a config change,
-// not a code change in the UI.
-//
-//   REST (default):  talks to the local Express server (backend/).
-//   Amplify (prod):  talks to AppSync/DynamoDB via the generated Data client.
+// This app is Amplify-only. `./amplifyConfig` runs Amplify.configure(outputs)
+// at import time, so it must be imported before generateClient(). The bundle
+// therefore requires amplify_outputs.json to exist — generate it by deploying:
+//   npm run sandbox        (repo root; provisions AppSync + DynamoDB + Cognito)
+//   npm run seed           (populates the tables — tables start empty!)
 //
 // Domain types are re-exported so callers keep importing from "../api/client".
+import "./amplifyConfig";
+import { generateClient } from "aws-amplify/data";
+import { createAmplifyApi, type AmplifyDataClient } from "./amplify";
 import type { ContentApi } from "./types";
-import { restApi } from "./rest";
 
 export type { Content, Review, Rail, Sentiment, ContentFilter } from "./types";
 export type { ContentApi } from "./types";
 
-export const api: ContentApi = restApi;
+// generateClient() is intentionally left untyped here: passing <Schema> would
+// pull @aws-amplify/backend types into the RN app's typecheck, where they don't
+// belong. The structural AmplifyDataClient interface (amplify.ts) documents the
+// exact query surface we use, and the mappers convert results to domain types.
+const client = generateClient() as unknown as AmplifyDataClient;
 
-// ---------------------------------------------------------------------------
-// Enabling the Amplify backend (production)
-// ---------------------------------------------------------------------------
-// 1. Install the runtime deps in apps/tv:
-//      npm install aws-amplify
-//      npm install react-native-get-random-values @azure/core-asynciterator-polyfill
-//    (the two polyfills are required for the Amplify Data client under Hermes).
-//
-// 2. Import the polyfills once at the very top of index.js:
-//      import "react-native-get-random-values";
-//      import "@azure/core-asynciterator-polyfill";
-//
-// 3. After `npx ampx sandbox` (or a pipeline deploy) generates
-//    apps/tv/amplify_outputs.json, replace the export above with:
-//
-//      import { Amplify } from "aws-amplify";
-//      import { generateClient } from "aws-amplify/data";
-//      import type { Schema } from "../../../../amplify/amplify/data/resource";
-//      import { createAmplifyApi } from "./amplify";
-//      import outputs from "../../amplify_outputs.json";
-//
-//      Amplify.configure(outputs);
-//      // generateClient<Schema>() is structurally assignable to AmplifyDataClient
-//      const client = generateClient<Schema>();
-//      export const api: ContentApi = createAmplifyApi(client);
-//
-// The UI needs no changes: createAmplifyApi returns the same ContentApi that
-// restApi implements, mapping Amplify's shape to domain types (see amplify.ts).
+export const api: ContentApi = createAmplifyApi(client);

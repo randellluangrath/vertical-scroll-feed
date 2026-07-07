@@ -44,3 +44,5 @@ next-env.d.ts
 .amplify
 amplify_outputs*
 amplifyconfiguration*
+# ...but keep the ambient type declaration (not the generated JSON)
+!amplify_outputs.d.ts

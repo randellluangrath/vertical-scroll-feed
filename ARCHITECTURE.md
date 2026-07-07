@@ -1,86 +1,99 @@
 # Architecture
 
-GoodWatch is structured as a multi-app platform: one backend contract, one
-design language, N device targets.
+GoodWatch is a React Native tvOS app on an AWS Amplify (Gen 2) backend,
+structured so the same backend contract and domain model can serve additional
+device targets later.
 
 ```
-├── app/, components/, ...   # Web app (Next.js) — the original vertical feed
-├── apps/
-│   └── tv/                  # Apple TV app (Expo + react-native-tvos)
-│       └── src/
-│           ├── api/         # Backend adapter (Express today, Amplify in prod)
-│           ├── components/  # TV-idiom UI (focus-driven, 10-foot sizing)
-│           ├── hooks/       # Data-fetching hooks
-│           ├── navigation/  # React Navigation stack
-│           ├── screens/     # Home (landing) / Discover (feed) / Player
-│           └── theme/       # Design tokens — single source of visual truth
-├── backend/                 # Node.js/Express API — the platform contract
-├── packages/
-│   └── shared/              # Shared types, content data, formatting utils
-└── amplify/                 # Amplify Gen 2 schema (AppSync + DynamoDB)
+apps/tv/          Apple TV app (Expo + react-native-tvos)
+  src/
+    api/          Backend adapter + Amplify anti-corruption layer
+    components/   TV-idiom UI (focus-driven, 10-foot sizing)
+    hooks/        Data-fetching hooks
+    navigation/   React Navigation stack
+    screens/      Home (landing) / Discover (feed) / Player
+    theme/        Design tokens — single source of visual truth
+amplify/          Amplify Gen 2 backend (AppSync + DynamoDB + Cognito)
+  data/           Schema: Content, Review, WatchlistItem
+  auth/           Cognito (email login; the "Editors" group can write content)
+  seed/           Seed script — populates DynamoDB from packages/shared
+packages/shared/  Canonical domain types + mock catalog data
 ```
 
 ## Principles
 
-**1. The API contract is the platform boundary.**
-Every app consumes the same endpoints (`/api/content`, `/api/content/:id`,
-`/api/content/:id/reviews`). Apps never own content logic — they render it.
-A new device target starts by pointing at the same API.
+**1. The Amplify Data API is the platform boundary.**
+Every client consumes the same AppSync schema. Apps render content; they don't
+own content logic. A new device target starts by pointing at the same API.
 
-**2. Backend implementations are swappable behind an adapter.**
-`apps/tv/src/api/client.ts` is the only file that knows how data arrives.
-Local dev uses the Express server; production swaps in the Amplify Data
-client (the swap-in is stubbed in the same file). Screens and hooks are
-backend-agnostic.
+**2. The generated Amplify type is not the domain type.**
+Amplify Gen 2's `ClientSchema` produces nullable-everywhere types, splits
+`gradient` into `gradientFrom`/`gradientTo`, and exposes `reviews` as a lazy
+relationship. `apps/tv/src/api/amplify.ts` is an *anti-corruption layer*:
+`toContent`/`toReview` map that shape into the clean domain types the UI speaks
+(`packages/shared`). The UI never imports an Amplify type. `createAmplifyApi`
+takes the client by injection and is typed against a minimal structural
+interface, so the mapping logic is testable without a live backend.
 
-**3. Design tokens over hardcoded styles.**
-`apps/tv/src/theme/tokens.ts` holds colors, spacing, radii, and the type
-scale. Screens reference tokens, never raw hex values. Re-skinning the app —
-or aligning it to a Figma export — is a one-file change. A future
-`packages/design-tokens` can serve web and TV from one definition.
+**3. Domain types are shared type-only.**
+The app imports `Content`/`Review`/etc. from `@goodwatch/shared` with
+`import type`, which Babel erases — so Metro never resolves the cross-package
+path and we avoid workspace/Metro config. One source of truth, zero bundler
+coupling. (The seed script, running under Node, imports the runtime data
+directly — no Metro constraint there.)
 
 **4. UI is per-device, logic is shared.**
-Interaction models genuinely differ (touch swipe vs D-pad focus vs pointer),
-so screens/components are written per app. Types, data shapes, formatting,
-and (eventually) hooks live in `packages/shared`.
+Interaction models differ (touch swipe vs D-pad focus vs pointer), so
+screens/components are written per app. Types, data shapes, formatting, and the
+API adapter pattern are shared.
+
+**5. Design tokens over hardcoded styles.**
+`apps/tv/src/theme/tokens.ts` holds colors, spacing, radii, and the type scale.
+Re-skinning — or aligning to a Figma export — is a one-file change.
+
+## Request path
+
+```
+Screen → useContent hook → api (ContentApi) → createAmplifyApi
+      → aws-amplify Data client → AppSync → DynamoDB
+      → toContent/toReview mappers → domain Content[] → UI
+```
+
+`ContentApi` (`apps/tv/src/api/types.ts`) is the interface the UI depends on.
+Only `client.ts` knows a real Amplify client is behind it.
 
 ## Adding a new device target
 
-1. `apps/<target>/` — new Expo app (mobile: plain `react-native`; another TV
-   platform: `react-native-tvos` also builds Android TV).
-2. Copy the `api/` adapter — it's transport code, identical across targets.
-3. Reuse types from `packages/shared`.
+1. `apps/<target>/` — new Expo app (mobile: plain `react-native`; Android TV:
+   `react-native-tvos` builds it too).
+2. Reuse `api/amplify.ts` + `api/types.ts` — the adapter and mappers are
+   transport code, identical across targets. (Promote them to `packages/shared`
+   the first time a second client needs them.)
+3. Reuse domain types from `packages/shared`.
 4. Write screens in that device's interaction idiom, styled from tokens.
 
-The TV app is the template: `api/` + `hooks/` port unchanged; `screens/` and
-`components/` are the per-device work.
+## Known tradeoffs
 
-## Known tradeoffs and the path forward
-
-- **No workspace manager yet.** Each package installs independently
-  (`npm install` per directory, lockfiles committed). This is deliberate:
-  npm workspaces change hoisting behavior, and Metro + react-native-tvos are
-  sensitive to it (see the `overrides` in `apps/tv/package.json`). Adopt
-  Turborepo + pnpm when a second RN app makes the duplication painful, and
-  budget time for Metro `watchFolders` config.
-- **`packages/shared` is consumed by copy, not import.** Metro doesn't follow
-  tsconfig path aliases at runtime; wiring true cross-package imports needs
-  `metro.config.js` watchFolders + nodeModulesPaths. Until then, the backend
-  and TV app carry small copies of the shared types — acceptable duplication
-  at this scale, first thing to fix under a workspace manager.
-- **The web app predates `apps/`.** It lives at the repo root because moving
-  a deployed Next.js app is churn without immediate payoff. When workspaces
-  land, it becomes `apps/web/` in the same change.
-- **Mock data lives in the backend.** Prod replaces it with DynamoDB via the
-  Amplify schema (`amplify/amplify/data/resource.ts`) — Content, Review, and
-  WatchlistItem models with guest-read auth already defined.
+- **No workspace manager yet.** Each package installs independently (lockfiles
+  committed; `npm ci`). Deliberate: npm workspaces change hoisting, and
+  react-native-tvos + Amplify + Metro are sensitive to it. Adopt Turborepo +
+  pnpm when a second RN app makes the duplication painful.
+- **The app can't bundle without `amplify_outputs.json`.** It's generated by
+  deploying (`npm run sandbox`) and gitignored. This is inherent to an
+  Amplify-only app; an ambient `amplify_outputs.d.ts` keeps `tsc` green
+  pre-deploy, but Metro needs the real file.
+- **Tables start empty.** Mock data lives in `packages/shared`; the seed script
+  loads it into DynamoDB. Because content is write-protected (the `Editors`
+  group), the seed provisions an Editor identity before writing.
+- **Writes are local-only in the UI today.** Likes/saves are component state.
+  The schema already models owner-writable `Review` and `WatchlistItem`, so
+  "post a review from your phone, see it on TV" is an integration, not a
+  redesign.
 
 ## Reliability practices
 
-- Lockfiles are committed everywhere, including `apps/tv` (react-native-tvos
-  resolution is fragile across npm versions — install with `npm ci`).
-- `npm run typecheck` in `apps/tv`; `next build` type-checks the web app.
-- Root `tsconfig.json` excludes `apps/`, `backend/`, `packages/`, `amplify/`
-  so each project type-checks against its own dependencies.
-- `turbopack.root` is pinned in `next.config.ts` — Next.js 16 misdetects the
-  workspace root once sibling app directories exist.
+- Lockfiles committed everywhere; install with `npm ci`.
+- `npm run typecheck` in `apps/tv`; `tsc -p amplify/tsconfig.json` for the
+  backend + seed.
+- `apps/tv/.npmrc` pins `legacy-peer-deps`; `overrides` pin react-native-tvos —
+  both required by the prerelease-tagged tvOS fork.
