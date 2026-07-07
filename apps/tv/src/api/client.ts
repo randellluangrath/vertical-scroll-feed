@@ -15,6 +15,7 @@ const client = generateClient() as unknown as AmplifyDataClient;
 
 export interface ContentApi {
   getContent(filter?: ContentFilter): Promise<Content[]>;
+  getContentById(id: string): Promise<Content | null>;
   getReviews(contentId: string): Promise<Review[]>;
 }
 

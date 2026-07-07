@@ -72,6 +72,7 @@ export interface AmplifyDataClient {
   models: {
     Content: {
       list(opts?: object): Promise<{ data: any[] }>;
+      get(id: string, opts?: object): Promise<{ data: any | null }>;
     };
     Review: {
       list(opts?: object): Promise<{ data: any[] }>;
@@ -79,7 +80,28 @@ export interface AmplifyDataClient {
   };
 }
 
-const CONTENT_SELECTION = ["*", "reviews.*"] as const;
+const CONTENT_SELECTION = [
+  "id",
+  "title",
+  "tagline",
+  "synopsis",
+  "genres",
+  "year",
+  "maturity",
+  "runtimeMinutes",
+  "matchPercent",
+  "cast",
+  "streamUrl",
+  "thumbnailUrl",
+  "gradientFrom",
+  "gradientTo",
+  "rails",
+  "trendingRank",
+  "likes",
+  "views",
+  "rating",
+  "reviews.*",
+] as const;
 
 export function createAmplifyApi(client: AmplifyDataClient): ContentApi {
   return {
@@ -91,14 +113,18 @@ export function createAmplifyApi(client: AmplifyDataClient): ContentApi {
           ...(filter?.genre ? { genres: { contains: filter.genre } } : {}),
         },
       });
-
       const list = data.map(toContent);
       if (filter?.rail === "trending") {
         list.sort((a, b) => (a.trendingRank ?? 99) - (b.trendingRank ?? 99));
       }
       return list;
     },
-
+    async getContentById(id: string): Promise<Content | null> {
+      const { data } = await client.models.Content.get(id, {
+        selectionSet: CONTENT_SELECTION,
+      });
+      return data ? toContent(data) : null;
+    },
     async getReviews(contentId: string): Promise<Review[]> {
       const { data } = await client.models.Review.list({
         filter: { contentId: { eq: contentId } },

@@ -4,9 +4,7 @@
     "slug": "goodwatch-tv",
     "version": "0.1.0",
     "orientation": "landscape",
-    "platforms": [
-      "ios"
-    ],
+    "platforms": ["ios"],
     "ios": {
       "bundleIdentifier": "com.goodwatch.tv"
     },
@@ -18,9 +16,6 @@
         }
       ]
     ],
-    "extra": {
-      "apiBaseUrl": "http://localhost:3001"
-    },
     "android": {
       "package": "com.goodwatch.tv"
     }
