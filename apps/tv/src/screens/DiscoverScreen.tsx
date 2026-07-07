@@ -23,7 +23,7 @@ import { useContent } from "../hooks/useContent";
 import { VideoCard } from "../components/VideoCard";
 import { DiscoveryBar } from "../components/DiscoveryBar";
 import type { RootStackParamList } from "../navigation/RootNavigator";
-import { ContentSummary } from "../api/client";
+import type { Content } from "../api/client";
 import { colors, type as typeScale } from "../theme/tokens";
 
 type Nav = NativeStackNavigationProp<RootStackParamList, "Discover">;
@@ -89,7 +89,7 @@ export function DiscoverScreen() {
     <View style={styles.container} onLayout={onContainerLayout}>
       <StatusBar hidden />
 
-      <FlatList<ContentSummary>
+      <FlatList<Content>
         data={content}
         keyExtractor={(item) => item.id}
         renderItem={({ item, index }) => (

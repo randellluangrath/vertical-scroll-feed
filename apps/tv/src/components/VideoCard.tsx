@@ -19,14 +19,14 @@ import {
 } from "react-native";
 import { Video as AVVideo, ResizeMode, AVPlaybackStatus } from "expo-av";
 import { LinearGradient } from "expo-linear-gradient";
-import { ContentSummary } from "../api/client";
+import type { Content } from "../api/client";
 import { SideActionsPanel } from "./SideActionsPanel";
 import { ReviewsSheet } from "./ReviewsSheet";
 
 const { width: W } = Dimensions.get("window");
 
 type Props = {
-  content: ContentSummary;
+  content: Content;
   /** Exact card height — the Discover screen passes its measured viewport. */
   height: number;
   isActive: boolean;

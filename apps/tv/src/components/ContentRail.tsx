@@ -13,7 +13,7 @@ import {
   Animated,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { ContentSummary } from "../api/client";
+import type { Content } from "../api/client";
 import { colors, spacing, radii, type as typeScale } from "../theme/tokens";
 
 const CARD_WIDTH = 400;
@@ -21,7 +21,7 @@ const CARD_HEIGHT = 225; // 16:9
 
 type Props = {
   title: string;
-  items: ContentSummary[];
+  items: Content[];
   onSelect: (id: string) => void;
   /** Give the first card in this rail initial focus. */
   hasTVPreferredFocus?: boolean;
@@ -54,7 +54,7 @@ function PosterCard({
   onPress,
   hasTVPreferredFocus,
 }: {
-  content: ContentSummary;
+  content: Content;
   onPress: () => void;
   hasTVPreferredFocus?: boolean;
 }) {

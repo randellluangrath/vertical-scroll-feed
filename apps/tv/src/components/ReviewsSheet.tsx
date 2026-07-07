@@ -15,12 +15,12 @@ import {
   TouchableHighlight,
   StyleSheet,
 } from "react-native";
-import { ContentSummary, Review } from "../api/client";
+import type { Content, Review } from "../api/client";
 import { FocusableButton } from "./FocusableButton";
 import { colors, spacing, radii, type as typeScale } from "../theme/tokens";
 
 type Props = {
-  content: ContentSummary;
+  content: Content;
   onClose: () => void;
 };
 

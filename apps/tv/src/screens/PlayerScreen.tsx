@@ -30,7 +30,7 @@ import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";
 import type { RootStackParamList } from "../navigation/RootNavigator";
 import { FocusableButton } from "../components/FocusableButton";
 import { api } from "../api/client";
-import type { ContentSummary } from "../api/client";
+import type { Content } from "../api/client";
 
 const { width: W, height: H } = Dimensions.get("window");
 const SEEK_SECONDS = 10;
@@ -43,7 +43,7 @@ export function PlayerScreen() {
   const { contentId } = route.params;
 
   const videoRef = useRef<AVVideo>(null);
-  const [content, setContent] = useState<ContentSummary | null>(null);
+  const [content, setContent] = useState<Content | null>(null);
   const [isPlaying, setIsPlaying] = useState(true);
   const [duration, setDuration] = useState(0);
   const [position, setPosition] = useState(0);

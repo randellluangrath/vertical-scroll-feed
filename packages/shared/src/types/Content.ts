@@ -13,6 +13,12 @@ export type Review = {
 
 export type Rail = "for-you" | "trending";
 
+/** Query parameters shared by every backend implementation. */
+export type ContentFilter = {
+  rail?: Rail;
+  genre?: string;
+};
+
 export type Content = {
   id: string;
   title: string;

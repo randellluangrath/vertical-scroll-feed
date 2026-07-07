@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { api, ContentSummary } from "../api/client";
+import { api } from "../api/client";
+import type { Content } from "../api/client";
 
 type Options = {
   rail: "for-you" | "trending";
@@ -7,7 +8,7 @@ type Options = {
 };
 
 export function useContent({ rail, genre }: Options) {
-  const [content, setContent] = useState<ContentSummary[]>([]);
+  const [content, setContent] = useState<Content[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 

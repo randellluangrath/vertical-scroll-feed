@@ -1,93 +1,46 @@
-// API adapter: switch API_MODE env var (or build config) to "amplify" in prod.
-// For local dev it talks to the Express backend at localhost:3001.
-// The shape of every response is identical regardless of backend.
-import Constants from "expo-constants";
-
-type Rail = "for-you" | "trending";
-
-const BASE_URL: string =
-  (Constants.expoConfig?.extra?.apiBaseUrl as string) ?? "http://localhost:3001";
-
-async function get<T>(path: string): Promise<T> {
-  const res = await fetch(`${BASE_URL}${path}`);
-  if (!res.ok) throw new Error(`API ${path} → ${res.status}`);
-  const json = await res.json();
-  return json.data as T;
-}
-
-export type ContentSummary = {
-  id: string;
-  title: string;
-  tagline: string;
-  synopsis: string;
-  genres: string[];
-  year: number;
-  maturity: string;
-  runtimeMinutes: number;
-  matchPercent: number;
-  cast: string[];
-  streamUrl: string;
-  thumbnailUrl?: string;
-  gradient: [string, string];
-  rails: Rail[];
-  trendingRank?: number;
-  likes: number;
-  views: string;
-  rating: number;
-  reviews: Review[];
-};
-
-export type Review = {
-  id: string;
-  author: string;
-  avatarColor: string;
-  rating: number;
-  sentiment: "loved" | "liked" | "mixed";
-  body: string;
-  likes: number;
-  timeAgo: string;
-};
-
-export const api = {
-  getContent(opts?: { rail?: Rail; genre?: string }): Promise<ContentSummary[]> {
-    const params = new URLSearchParams();
-    if (opts?.rail) params.set("rail", opts.rail);
-    if (opts?.genre) params.set("genre", opts.genre);
-    const qs = params.toString();
-    return get<ContentSummary[]>(`/api/content${qs ? `?${qs}` : ""}`);
-  },
-
-  getContentById(id: string): Promise<ContentSummary> {
-    return get<ContentSummary>(`/api/content/${id}`);
-  },
-
-  getReviews(id: string): Promise<Review[]> {
-    return get<Review[]>(`/api/content/${id}/reviews`);
-  },
-};
-
-// --- Amplify swap-in (uncomment in production) ---
+// API entry point — selects a backend and exposes it as `api`.
 //
-// import { generateClient } from "aws-amplify/data";
-// import type { Schema } from "../../amplify/data/resource";
+// Every screen/hook imports `{ api }` (and domain types) from here and never
+// knows which backend is live. Swapping REST ↔ Amplify is a config change,
+// not a code change in the UI.
 //
-// const amplifyClient = generateClient<Schema>();
+//   REST (default):  talks to the local Express server (backend/).
+//   Amplify (prod):  talks to AppSync/DynamoDB via the generated Data client.
 //
-// export const api = {
-//   async getContent(opts?: { rail?: Rail; genre?: string }) {
-//     const { data } = await amplifyClient.models.Content.list({
-//       filter: opts?.rail ? { rails: { contains: opts.rail } } : undefined,
-//     });
-//     return data;
-//   },
-//   async getContentById(id: string) {
-//     const { data } = await amplifyClient.models.Content.get({ id });
-//     return data;
-//   },
-//   async getReviews(contentId: string) {
-//     const { data } = await amplifyClient.models.Review.list({
-//       filter: { contentId: { eq: contentId } },
-//     });
-//     return data;
-//   },
-// };
+// Domain types are re-exported so callers keep importing from "../api/client".
+import type { ContentApi } from "./types";
+import { restApi } from "./rest";
+
+export type { Content, Review, Rail, Sentiment, ContentFilter } from "./types";
+export type { ContentApi } from "./types";
+
+export const api: ContentApi = restApi;
+
+// ---------------------------------------------------------------------------
+// Enabling the Amplify backend (production)
+// ---------------------------------------------------------------------------
+// 1. Install the runtime deps in apps/tv:
+//      npm install aws-amplify
+//      npm install react-native-get-random-values @azure/core-asynciterator-polyfill
+//    (the two polyfills are required for the Amplify Data client under Hermes).
+//
+// 2. Import the polyfills once at the very top of index.js:
+//      import "react-native-get-random-values";
+//      import "@azure/core-asynciterator-polyfill";
+//
+// 3. After `npx ampx sandbox` (or a pipeline deploy) generates
+//    apps/tv/amplify_outputs.json, replace the export above with:
+//
+//      import { Amplify } from "aws-amplify";
+//      import { generateClient } from "aws-amplify/data";
+//      import type { Schema } from "../../../../amplify/amplify/data/resource";
+//      import { createAmplifyApi } from "./amplify";
+//      import outputs from "../../amplify_outputs.json";
+//
+//      Amplify.configure(outputs);
+//      // generateClient<Schema>() is structurally assignable to AmplifyDataClient
+//      const client = generateClient<Schema>();
+//      export const api: ContentApi = createAmplifyApi(client);
+//
+// The UI needs no changes: createAmplifyApi returns the same ContentApi that
+// restApi implements, mapping Amplify's shape to domain types (see amplify.ts).
