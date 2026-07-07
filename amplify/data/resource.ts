@@ -1,7 +1,6 @@
 import { a, defineData, type ClientSchema } from "@aws-amplify/backend";
 
 const schema = a.schema({
-  // Content item (show, movie, short) — readable by unauthenticated guests.
   Content: a
     .model({
       title: a.string().required(),
@@ -13,10 +12,8 @@ const schema = a.schema({
       runtimeMinutes: a.integer(),
       matchPercent: a.integer(),
       cast: a.string().array(),
-      // HLS manifest URL — Mux, CloudFront, or custom CDN
       streamUrl: a.string().required(),
       thumbnailUrl: a.string(),
-      // Gradient stored as two hex strings for fallback UI
       gradientFrom: a.string(),
       gradientTo: a.string(),
       rails: a.string().array(),
@@ -24,11 +21,10 @@ const schema = a.schema({
       likes: a.integer().default(0),
       views: a.string(),
       rating: a.float(),
-      // Reviews are a child model so they paginate independently
       reviews: a.hasMany("Review", "contentId"),
     })
     .authorization((allow) => [
-      allow.guest().to(["read"]),
+      allow.publicApiKey().to(["read", "create"]), // remove create after seed
     ]),
 
   Review: a
@@ -44,7 +40,7 @@ const schema = a.schema({
       timeAgo: a.string(),
     })
     .authorization((allow) => [
-      allow.guest().to(["read"]),
+      allow.publicApiKey().to(["read", "create"]), // remove create after seed
     ]),
 });
 
@@ -53,7 +49,6 @@ export type Schema = ClientSchema<typeof schema>;
 export const data = defineData({
   schema,
   authorizationModes: {
-    // Guest API key for unauthenticated read (content catalog)
     defaultAuthorizationMode: "apiKey",
     apiKeyAuthorizationMode: { expiresInDays: 365 },
   },
