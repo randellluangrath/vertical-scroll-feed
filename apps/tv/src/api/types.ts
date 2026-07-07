@@ -9,12 +9,16 @@
 // Rule: only ever `import type` from @goodwatch/shared. Importing a runtime
 // value (e.g. ALL_GENRES, the CONTENT array) would force Metro to bundle the
 // package and reintroduce the workspace-resolution problems we avoid here.
-export type { Content, Review, Rail, Sentiment, ContentFilter } from "@goodwatch/shared";
+export type {
+  Content,
+  Review,
+  Rail,
+  Sentiment,
+  ContentFilter,
+} from "@goodwatch/shared";
 
 import type { Content, Review, ContentFilter } from "@goodwatch/shared";
 
-// Every backend implementation (REST today, Amplify in prod) satisfies this
-// interface and returns domain types. Screens and hooks depend only on this.
 export interface ContentApi {
   getContent(filter?: ContentFilter): Promise<Content[]>;
   getContentById(id: string): Promise<Content>;
