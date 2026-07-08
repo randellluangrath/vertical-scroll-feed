@@ -24,6 +24,7 @@ import { ContentRail } from "../components/ContentRail";
 import { DiscoverBanner } from "../components/DiscoverBanner";
 import { FocusableButton } from "../components/FocusableButton";
 import type { RootStackParamList } from "../navigation/RootNavigator";
+import type { Content } from "../api/client";
 import { colors, spacing, radii, type as typeScale } from "../theme/tokens";
 
 const { height: SCREEN_H } = Dimensions.get("window");
@@ -36,7 +37,7 @@ export function HomeScreen() {
   const forYou = useContent({ rail: "for-you", genre: null });
 
   const openPlayer = useCallback(
-    (contentId: string) => navigation.navigate("Player", { contentId }),
+    (content: Content) => navigation.navigate("Player", { content }),
     [navigation],
   );
   const openDiscover = useCallback(
@@ -129,7 +130,7 @@ export function HomeScreen() {
 
               <View style={styles.heroActions}>
                 <FocusableButton
-                  onPress={() => openPlayer(hero.id)}
+                  onPress={() => openPlayer(hero)}
                   hasTVPreferredFocus
                   style={styles.primaryButton}
                   focusBorderColor={colors.brandStrong}

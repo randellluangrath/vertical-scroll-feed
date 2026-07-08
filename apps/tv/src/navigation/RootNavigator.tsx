@@ -3,11 +3,15 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { HomeScreen } from "../screens/HomeScreen";
 import { DiscoverScreen } from "../screens/DiscoverScreen";
 import { PlayerScreen } from "../screens/PlayerScreen";
+import type { Content } from "../api/client";
 
 export type RootStackParamList = {
   Home: undefined;
   Discover: undefined;
-  Player: { contentId: string };
+  // The full Content object rides along (plain JSON, serializable) — the
+  // caller already has it, so the player starts without a refetch and the
+  // slimmed ContentApi doesn't need a getContentById.
+  Player: { content: Content };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();

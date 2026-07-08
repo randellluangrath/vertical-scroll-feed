@@ -58,8 +58,8 @@ export function DiscoverScreen() {
   );
 
   const handlePress = useCallback(
-    (id: string) => {
-      navigation.navigate("Player", { contentId: id });
+    (item: Content) => {
+      navigation.navigate("Player", { content: item });
     },
     [navigation],
   );
@@ -95,7 +95,7 @@ export function DiscoverScreen() {
             height={viewportHeight}
             isActive={index === activeIndex}
             hasTVPreferredFocus={index === 0}
-            onPress={() => handlePress(item.id)}
+            onPress={() => handlePress(item)}
           />
         )}
         getItemLayout={(_, index) => ({

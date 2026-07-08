@@ -8,7 +8,7 @@
 //                                         moves focus to the panel automatically —
 //                                         nextFocus* props are Android TV only)
 //   bottom overlay text                →  same, scaled up for 2m viewing distance
-import React, { useRef, useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -17,7 +17,7 @@ import {
   Dimensions,
   useTVEventHandler,
 } from "react-native";
-import { Video as AVVideo, ResizeMode, AVPlaybackStatus } from "expo-av";
+import { useVideoPlayer, VideoView } from "expo-video";
 import { LinearGradient } from "expo-linear-gradient";
 import type { Content } from "../api/client";
 import { SideActionsPanel } from "./SideActionsPanel";
@@ -41,24 +41,27 @@ export function VideoCard({
   hasTVPreferredFocus,
   onPress,
 }: Props) {
-  const videoRef = useRef<AVVideo>(null);
-
   const [liked, setLiked] = useState(false);
   const [saved, setSaved] = useState(false);
   const [reviewsOpen, setReviewsOpen] = useState(false);
+
+  // expo-video player: muted looping preview, playback driven imperatively.
+  const player = useVideoPlayer(content.streamUrl, (p) => {
+    p.loop = true;
+    p.muted = true;
+  });
 
   // Drive play/pause from parent-controlled isActive flag.
   // isActive is set via FlatList onViewableItemsChanged — same pattern as web's
   // useInView. Pause only — resetting position while the card is still
   // partially on screen causes a visible frame-jump flicker.
   useEffect(() => {
-    if (!videoRef.current) return;
     if (isActive && !reviewsOpen) {
-      videoRef.current.playAsync().catch(() => {});
+      player.play();
     } else {
-      videoRef.current.pauseAsync().catch(() => {});
+      player.pause();
     }
-  }, [isActive, reviewsOpen]);
+  }, [player, isActive, reviewsOpen]);
 
   // Remote control events for the focused card.
   // On tvOS, useTVEventHandler fires for the currently focused element.
@@ -68,22 +71,17 @@ export function VideoCard({
         if (!isActive || reviewsOpen) return;
         if (event.eventType === "select") {
           // Short press → play/pause toggle
-          videoRef.current
-            ?.getStatusAsync()
-            .then((status: AVPlaybackStatus) => {
-              if (!status.isLoaded) return;
-              if (status.isPlaying) {
-                videoRef.current?.pauseAsync();
-              } else {
-                videoRef.current?.playAsync();
-              }
-            });
+          if (player.playing) {
+            player.pause();
+          } else {
+            player.play();
+          }
         }
         if (event.eventType === "longSelect") {
           setLiked((l) => !l);
         }
       },
-      [isActive, reviewsOpen],
+      [player, isActive, reviewsOpen],
     ),
   );
 
@@ -98,14 +96,11 @@ export function VideoCard({
       />
 
       {/* Video */}
-      <AVVideo
-        ref={videoRef}
-        source={{ uri: content.streamUrl }}
+      <VideoView
+        player={player}
         style={StyleSheet.absoluteFill}
-        resizeMode={ResizeMode.COVER}
-        isLooping
-        isMuted
-        shouldPlay={false}
+        contentFit="cover"
+        nativeControls={false}
       />
 
       {/* Bottom content overlay — gradient + metadata */}

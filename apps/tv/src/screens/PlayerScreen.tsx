@@ -1,38 +1,30 @@
-// PlayerScreen — full episode playback with TV-native controls.
+// PlayerScreen — full episode playback with TV-native controls (expo-video).
 //
 // The remote maps to:
-//   SELECT          → play / pause
-//   D-pad LEFT/RIGHT → seek ±10s (via useTVEventHandler)
-//   MENU / BACK     → navigate back to HomeScreen (handled by React Navigation)
-//   PLAY_PAUSE      → play / pause
+//   SELECT / PLAY_PAUSE → play / pause
+//   D-pad LEFT/RIGHT    → seek ±10s (via useTVEventHandler)
+//   MENU / BACK         → navigate back (handled by React Navigation)
 //
-// Progress bar is a simple animated view driven by a 1-second interval.
-// Scrubbing is done by accumulating left/right D-pad events while the
-// progress bar has focus — this matches how native tvOS video players work.
-import React, {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+// expo-video notes: the player is an event-driven shared object, not a
+// status-callback component like expo-av. We enable timeUpdate events
+// (timeUpdateEventInterval) and read playing state via useEvent, so the
+// progress UI re-renders only when the player reports changes.
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   View,
   Text,
   StyleSheet,
-  Dimensions,
   Animated,
   useTVEventHandler,
 } from "react-native";
-import { Video as AVVideo, ResizeMode, AVPlaybackStatus } from "expo-av";
+import { useEvent } from "expo";
+import { useVideoPlayer, VideoView } from "expo-video";
 import { LinearGradient } from "expo-linear-gradient";
 import { StatusBar } from "expo-status-bar";
 import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";
 import type { RootStackParamList } from "../navigation/RootNavigator";
 import { FocusableButton } from "../components/FocusableButton";
-import { api } from "../api/client";
-import type { Content } from "../api/client";
 
-const { width: W, height: H } = Dimensions.get("window");
 const SEEK_SECONDS = 10;
 
 type Route = RouteProp<RootStackParamList, "Player">;
@@ -40,20 +32,24 @@ type Route = RouteProp<RootStackParamList, "Player">;
 export function PlayerScreen() {
   const route = useRoute<Route>();
   const navigation = useNavigation();
-  const { contentId } = route.params;
+  const { content } = route.params;
 
-  const videoRef = useRef<AVVideo>(null);
-  const [content, setContent] = useState<Content | null>(null);
-  const [isPlaying, setIsPlaying] = useState(true);
-  const [duration, setDuration] = useState(0);
-  const [position, setPosition] = useState(0);
+  const player = useVideoPlayer(content.streamUrl, (p) => {
+    p.loop = true;
+    p.timeUpdateEventInterval = 0.25; // seconds between timeUpdate events
+    p.play();
+  });
+
+  const { isPlaying } = useEvent(player, "playingChange", {
+    isPlaying: player.playing,
+  });
+  const timeUpdate = useEvent(player, "timeUpdate");
+  const position = timeUpdate?.currentTime ?? 0; // seconds
+  const duration = player.duration || 0; // seconds; 0 until loaded
+
   const [controlsVisible, setControlsVisible] = useState(true);
   const controlsTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const progressAnim = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    api.getContentById(contentId).then(setContent).catch(console.error);
-  }, [contentId]);
 
   // Hide controls after 4s of no interaction
   const showControls = useCallback(() => {
@@ -79,71 +75,56 @@ export function PlayerScreen() {
     }).start();
   }, [position, duration, progressAnim]);
 
-  const onPlaybackStatusUpdate = useCallback((status: AVPlaybackStatus) => {
-    if (!status.isLoaded) return;
-    setIsPlaying(status.isPlaying);
-    setDuration(status.durationMillis ?? 0);
-    setPosition(status.positionMillis ?? 0);
-  }, []);
-
   // Remote control handler
   useTVEventHandler(
     useCallback(
       (event) => {
         showControls();
         if (event.eventType === "select" || event.eventType === "playPause") {
-          isPlaying
-            ? videoRef.current?.pauseAsync()
-            : videoRef.current?.playAsync();
+          if (player.playing) {
+            player.pause();
+          } else {
+            player.play();
+          }
         }
         if (event.eventType === "left") {
-          videoRef.current?.setPositionAsync(
-            Math.max(0, position - SEEK_SECONDS * 1000),
-          );
+          player.seekBy(-SEEK_SECONDS);
         }
         if (event.eventType === "right") {
-          videoRef.current?.setPositionAsync(
-            Math.min(duration, position + SEEK_SECONDS * 1000),
-          );
+          player.seekBy(SEEK_SECONDS);
         }
       },
-      [isPlaying, position, duration, showControls],
+      [player, showControls],
     ),
   );
 
-  const formatTime = (ms: number) => {
-    const s = Math.floor(ms / 1000);
+  const formatTime = (seconds: number) => {
+    const s = Math.floor(seconds);
     const m = Math.floor(s / 60);
     const sec = s % 60;
     return `${m}:${sec.toString().padStart(2, "0")}`;
   };
 
-  if (!content) {
-    return (
-      <View style={styles.center}>
-        <Text style={styles.loadingText}>Loading…</Text>
-      </View>
-    );
-  }
-
   return (
     <View style={styles.container}>
       <StatusBar hidden />
 
-      <AVVideo
-        ref={videoRef}
-        source={{ uri: content.streamUrl }}
+      <VideoView
+        player={player}
         style={StyleSheet.absoluteFill}
-        resizeMode={ResizeMode.COVER}
-        shouldPlay
-        isLooping
-        onPlaybackStatusUpdate={onPlaybackStatusUpdate}
+        contentFit="cover"
+        nativeControls={false}
       />
 
       {/* Controls overlay */}
       {controlsVisible && (
         <LinearGradient
-          colors={["rgba(0,0,0,0.7)", "transparent", "transparent", "rgba(0,0,0,0.85)"]}
+          colors={[
+            "rgba(0,0,0,0.7)",
+            "transparent",
+            "transparent",
+            "rgba(0,0,0,0.85)",
+          ]}
           style={StyleSheet.absoluteFill}
           pointerEvents="none"
         >
@@ -197,16 +178,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#000",
-  },
-  center: {
-    flex: 1,
-    backgroundColor: "#000",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  loadingText: {
-    color: "rgba(255,255,255,0.6)",
-    fontSize: 22,
   },
   topBar: {
     flexDirection: "row",

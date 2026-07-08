@@ -5,14 +5,14 @@ remote-driven "Discover" feed plus a 10-foot landing page — backed by
 **AWS Amplify (Gen 2)**.
 
 ```
-apps/tv/          Apple TV app (Expo SDK 52 + react-native-tvos)
+apps/tv/          Apple TV app (Expo SDK 57 + react-native-tvos 0.86 + React 19)
 amplify/          Amplify Gen 2 backend (AppSync + DynamoDB + Cognito)
 packages/shared/  Domain types + mock catalog data
 ```
 
 ## Prerequisites
 
-- Node 20+, a Mac with Xcode + the tvOS simulator runtime
+- Node `^20.19.4 || ^22.13 || ^24.3+` (react-native 0.86 engines — Node 22.12 is NOT enough), a Mac with Xcode + the tvOS simulator runtime
 - AWS credentials configured (`aws configure` or SSO) for the backend
 
 ## Run it

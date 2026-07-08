@@ -22,7 +22,7 @@ const CARD_HEIGHT = 225; // 16:9
 type Props = {
   title: string;
   items: Content[];
-  onSelect: (id: string) => void;
+  onSelect: (content: Content) => void;
   /** Give the first card in this rail initial focus. */
   hasTVPreferredFocus?: boolean;
 };
@@ -45,7 +45,7 @@ export function ContentRail({
         renderItem={({ item, index }) => (
           <PosterCard
             content={item}
-            onPress={() => onSelect(item.id)}
+            onPress={() => onSelect(item)}
             hasTVPreferredFocus={hasTVPreferredFocus && index === 0}
           />
         )}

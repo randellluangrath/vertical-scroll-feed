@@ -6,7 +6,8 @@ reintroduce Next.js.
 
 ## Layout
 
-- `apps/tv/` — the Apple TV app (Expo SDK 52 + react-native-tvos). This is the product.
+- `apps/tv/` — the Apple TV app (Expo SDK 57 + react-native-tvos 0.86 + React 19).
+  This is the product. Node ^20.19.4 || ^22.13 || ^24.3+ required (RN 0.86 engines).
 - `amplify/` — Amplify Gen 2 backend (AppSync + DynamoDB + Cognito). Schema in
   `amplify/data/resource.ts`; seed in `amplify/seed/seed.ts`.
 - `packages/shared/` — canonical domain types + mock catalog data.
@@ -16,9 +17,12 @@ reintroduce Next.js.
 ## Gotchas (learned the hard way)
 
 - `react-native` is aliased to `react-native-tvos` (prerelease-tagged, e.g.
-  `0.76.5-0`). Peer ranges like `>=0.70` don't match prereleases, so installs
+  `0.86.0-2`). Peer ranges like `>=0.70` don't match prereleases, so installs
   need `legacy-peer-deps` (set in `apps/tv/.npmrc`) and the `overrides` pin in
   `apps/tv/package.json`. Install with `npm ci`.
+- Video is `expo-video` (expo-av is deprecated and off the SDK 57 release
+  train). The player is an event-driven object: `useVideoPlayer` +
+  `useEvent(player, ...)`, not status callbacks.
 - Amplify v6 on RN needs `metro.config.js` (`sourceExts += cjs`,
   `unstable_enablePackageExports = false`) and the polyfills imported at the top
   of `index.js`. Native deps (`@aws-amplify/react-native`, async-storage) require
