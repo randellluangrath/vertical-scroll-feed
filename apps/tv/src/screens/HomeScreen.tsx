@@ -1,27 +1,17 @@
 import React, { useCallback } from "react";
-import {
-  View,
-  Text,
-  ScrollView,
-  Image,
-  StyleSheet,
-  Dimensions,
-} from "react-native";
+import { View, ScrollView, StyleSheet } from "react-native";
 import { StatusBar } from "expo-status-bar";
-import { LinearGradient } from "expo-linear-gradient";
-import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useContent } from "../hooks/useContent";
+import { Billboard } from "../components/Billboard";
+import { BrandBar } from "../components/BrandBar";
 import { ContentRail } from "../components/ContentRail";
 import { DiscoverBanner } from "../components/DiscoverBanner";
-import { FocusableButton } from "../components/FocusableButton";
 import { SplashInterstitial } from "../components/SplashInterstitial";
 import type { RootStackParamList } from "../navigation/RootNavigator";
-import { colors, spacing, radii, type as typeScale } from "../theme/tokens";
-import { BrandBar } from "../components/BrandBar";
-
-const { height: SCREEN_H } = Dimensions.get("window");
+import type { Content } from "../api/client";
+import { colors, spacing } from "../theme/tokens";
 
 type Nav = NativeStackNavigationProp<RootStackParamList, "Home">;
 
@@ -64,67 +54,8 @@ export function HomeScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Hero */}
-        {hero && (
-          <View style={styles.hero}>
-            <LinearGradient
-              colors={hero.gradient}
-              style={StyleSheet.absoluteFill}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-            />
-            {hero.thumbnailUrl && (
-              <Image
-                source={{ uri: hero.thumbnailUrl }}
-                style={StyleSheet.absoluteFill}
-                resizeMode="cover"
-              />
-            )}
-            {/* Left-to-right scrim keeps hero text legible over the art */}
-            <LinearGradient
-              colors={[colors.overlayStrong, colors.overlaySoft, "transparent"]}
-              start={{ x: 0, y: 0.5 }}
-              end={{ x: 1, y: 0.5 }}
-              style={StyleSheet.absoluteFill}
-            />
-            <LinearGradient
-              colors={["transparent", colors.background]}
-              style={styles.heroBottomFade}
-            />
-
-            <View style={styles.heroContent}>
-              <View style={styles.heroMetaLine}>
-                <Text style={styles.heroMatch}>{hero.matchPercent}% match</Text>
-                <Text style={styles.heroBadge}>{hero.maturity}</Text>
-                <Text style={styles.heroMetaText}>{hero.year}</Text>
-                <Text style={styles.heroMetaText}>
-                  ★ {hero.rating.toFixed(1)}
-                </Text>
-              </View>
-              <Text style={styles.heroTitle}>{hero.title}</Text>
-              <Text style={styles.heroTagline}>{hero.tagline}</Text>
-              <Text style={styles.heroSynopsis} numberOfLines={2}>
-                {hero.synopsis}
-              </Text>
-
-              <View style={styles.heroActions}>
-                <FocusableButton
-                  onPress={() => openPlayer(hero)}
-                  hasTVPreferredFocus
-                  style={styles.primaryButton}
-                  focusBorderColor={colors.brandStrong}
-                  underlayColor="#EDEDF7"
-                  accessibilityLabel={`Watch ${hero.title} now`}
-                >
-                  <View style={styles.primaryButtonInner}>
-                    <Ionicons name="play" size={22} color="#000000" />
-                    <Text style={styles.primaryButtonLabel}>Watch Now</Text>
-                  </View>
-                </FocusableButton>
-              </View>
-            </View>
-          </View>
-        )}
+        {/* Autoplaying billboard — muted preview of the featured title */}
+        {hero && <Billboard content={hero} onWatch={() => openPlayer(hero)} />}
 
         {/* Rails */}
         <ContentRail
@@ -156,88 +87,5 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingBottom: spacing.xxl,
-  },
-  hero: {
-    height: SCREEN_H * 0.52,
-    justifyContent: "flex-end",
-    overflow: "hidden",
-    marginBottom: spacing.xl,
-  },
-  heroBottomFade: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 140,
-  },
-  heroContent: {
-    paddingHorizontal: spacing.xxl,
-    paddingBottom: spacing.xl,
-    maxWidth: 900,
-  },
-  heroMetaLine: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.md,
-    marginBottom: spacing.sm,
-  },
-  heroMatch: {
-    color: colors.match,
-    fontSize: typeScale.caption,
-    fontWeight: "700",
-  },
-  heroBadge: {
-    color: colors.textSecondary,
-    fontSize: typeScale.small,
-    borderWidth: 1,
-    borderColor: colors.chipBorder,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: radii.sm,
-    fontWeight: "600",
-  },
-  heroMetaText: {
-    color: colors.textSecondary,
-    fontSize: typeScale.caption,
-  },
-  heroTitle: {
-    color: colors.textPrimary,
-    fontSize: typeScale.hero,
-    fontWeight: "900",
-    letterSpacing: -1.5,
-    lineHeight: typeScale.hero + 6,
-  },
-  heroTagline: {
-    color: colors.textSecondary,
-    fontSize: typeScale.body,
-    fontWeight: "500",
-    marginTop: spacing.xs,
-  },
-  heroSynopsis: {
-    color: colors.textSecondary,
-    fontSize: typeScale.caption,
-    lineHeight: 24,
-    marginTop: spacing.md,
-  },
-  heroActions: {
-    flexDirection: "row",
-    gap: spacing.md,
-    marginTop: spacing.lg,
-  },
-  primaryButton: {
-    backgroundColor: colors.textPrimary,
-    borderRadius: radii.md,
-    paddingHorizontal: spacing.xl,
-    paddingVertical: spacing.md,
-  },
-  primaryButtonInner: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: spacing.sm,
-  },
-  primaryButtonLabel: {
-    color: "#000000",
-    fontSize: typeScale.body,
-    fontWeight: "600",
   },
 });
