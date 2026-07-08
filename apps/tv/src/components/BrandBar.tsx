@@ -1,12 +1,3 @@
-// BrandBar — the top navigation bar.
-//
-//   [ GoodWatch  Discover ] ...................... [ Search   (avatar) ]
-//
-// Left: wordmark + primary nav. Right (justified): utility actions. All
-// interactive items are FocusableButtons so the tvOS focus engine can reach
-// them with the D-pad. None take hasTVPreferredFocus — initial focus belongs
-// to the screen content (e.g. the hero's Watch Now), not the chrome.
-import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { FocusableButton } from "./FocusableButton";
 import { colors, spacing, radii, type as typeScale } from "../theme/tokens";
@@ -14,12 +5,10 @@ import { colors, spacing, radii, type as typeScale } from "../theme/tokens";
 type NavKey = "home" | "discover";
 
 type Props = {
-  /** Highlights the matching nav item. */
   activeItem?: NavKey;
   onDiscover?: () => void;
   onSearch?: () => void;
   onProfile?: () => void;
-  /** Initial shown in the profile avatar. */
   userInitial?: string;
 };
 
@@ -32,7 +21,6 @@ export function BrandBar({
 }: Props) {
   return (
     <View style={styles.brandBar}>
-      {/* Left: wordmark + primary nav */}
       <View style={styles.leftGroup}>
         <Text style={styles.brandMark}>
           Good<Text style={styles.brandAccent}>Watch</Text>

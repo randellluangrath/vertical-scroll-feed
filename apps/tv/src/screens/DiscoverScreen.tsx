@@ -1,11 +1,3 @@
-// DiscoverScreen — the vertical swipe feed, one full-viewport video per card.
-//
-// Viewport fit: cards are sized to the *measured* height of the list container
-// (onLayout), not Dimensions.get("window") — the two can disagree on tvOS,
-// which is what lets a sliver of the next card leak in. With cards exactly
-// viewport-sized, the tvOS focus engine's own scroll-to-reveal aligns each
-// card perfectly. Do NOT add snapToInterval here: snap logic fights the focus
-// engine's scroll and freezes the feed.
 import React, { useCallback, useRef, useState } from "react";
 import {
   View,

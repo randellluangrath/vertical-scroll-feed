@@ -13,9 +13,8 @@ apps/tv/          Apple TV app (Expo + react-native-tvos)
     navigation/   React Navigation stack
     screens/      Home (landing) / Discover (feed) / Player
     theme/        Design tokens — single source of visual truth
-amplify/          Amplify Gen 2 backend (AppSync + DynamoDB + Cognito)
-  data/           Schema: Content, Review, WatchlistItem
-  auth/           Cognito (email login; the "Editors" group can write content)
+amplify/          Amplify Gen 2 backend (AppSync + DynamoDB)
+  data/           Schema: Content, Review (API-key auth)
   seed/           Seed script — populates DynamoDB from packages/shared
 packages/shared/  Canonical domain types + mock catalog data
 ```
@@ -54,13 +53,26 @@ Re-skinning — or aligning to a Figma export — is a one-file change.
 ## Request path
 
 ```
-Screen → useContent hook → api (ContentApi) → createAmplifyApi
+Screen → useContent (TanStack Query) → api (ContentApi) → createAmplifyApi
       → aws-amplify Data client → AppSync → DynamoDB
-      → toContent/toReview mappers → domain Content[] → UI
+      → toContent/toReview mappers → domain Content[] → Query cache → UI
 ```
 
-`ContentApi` (`apps/tv/src/api/types.ts`) is the interface the UI depends on.
+`ContentApi` (`apps/tv/src/api/client.ts`) is the interface the UI depends on.
 Only `client.ts` knows a real Amplify client is behind it.
+
+## Client data
+
+Data fetching goes through **TanStack Query** (`apps/tv/src/api/queryClient.ts`).
+`contentQueryOptions` in `hooks/useContent.ts` is the single source of truth for
+a content list's key and fetcher, shared by `useQuery` and prefetch call sites
+(genre chips prefetch on focus). Home and Discover share cache keys, so
+navigating between them is served from cache rather than refetched. RN adapters
+wire `onlineManager` to NetInfo and `focusManager` to `AppState`. Playback
+metadata is read from the Query cache by id (`useCachedContent`), while the
+Player receives `streamUrl` as a nav param so it can start without a refetch;
+`prewarm.ts` warms the HLS manifest/CDN on card focus. A top-level
+`ErrorBoundary` (wrapped in `QueryErrorResetBoundary`) catches render errors.
 
 ## Adding a new device target
 
@@ -82,12 +94,17 @@ Only `client.ts` knows a real Amplify client is behind it.
   Amplify-only app; an ambient `amplify_outputs.d.ts` keeps `tsc` green
   pre-deploy, but Metro needs the real file.
 - **Tables start empty.** Mock data lives in `packages/shared`; the seed script
-  loads it into DynamoDB. Because content is write-protected (the `Editors`
-  group), the seed provisions an Editor identity before writing.
+  loads it into DynamoDB. Seeding currently relies on the public API key's
+  temporary `create` grant (`// remove create after seed` in the schema) — that
+  grant should be dropped once seeded, moving writes behind a real identity.
+- **Auth is public API key only.** There's no Cognito/sign-in today; models use
+  `allow.publicApiKey().to(["read", "create"])`, so the catalog is effectively
+  world-readable/writable until `create` is removed. Per-user features
+  (watchlist, personalized rails) would reintroduce a `userPool` auth mode with
+  owner-based rules.
 - **Writes are local-only in the UI today.** Likes/saves are component state.
-  The schema already models owner-writable `Review` and `WatchlistItem`, so
-  "post a review from your phone, see it on TV" is an integration, not a
-  redesign.
+  The schema models `Review`, so "post a review from your phone, see it on TV"
+  is an integration (plus auth) rather than a redesign.
 
 ## Reliability practices
 

@@ -1,14 +1,3 @@
-// PlayerScreen — full episode playback with TV-native controls (expo-video).
-//
-// The remote maps to:
-//   SELECT / PLAY_PAUSE → play / pause
-//   D-pad LEFT/RIGHT    → seek ±10s (via useTVEventHandler)
-//   MENU / BACK         → navigate back (handled by React Navigation)
-//
-// expo-video notes: the player is an event-driven shared object, not a
-// status-callback component like expo-av. We enable timeUpdate events
-// (timeUpdateEventInterval) and read playing state via useEvent, so the
-// progress UI re-renders only when the player reports changes.
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   View,

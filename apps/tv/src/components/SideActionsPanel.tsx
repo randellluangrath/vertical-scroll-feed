@@ -1,10 +1,3 @@
-// Vertical panel of action buttons on the right edge of each VideoCard.
-// tvOS's geometric focus engine moves focus here on D-pad RIGHT from the
-// card surface, and back on D-pad LEFT — no explicit wiring needed
-// (nextFocus* props are Android TV APIs and don't exist on tvOS).
-//
-// Icons are Ionicons via @expo/vector-icons — filled variant when active,
-// outline when idle, matching the platform's visual language.
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
@@ -103,12 +96,7 @@ function ActionButton({
       accessibilityLabel={accessibilityLabel}
     >
       <View style={styles.buttonInner}>
-        <Ionicons
-          name={icon}
-          size={34}
-          color={iconColor}
-          style={styles.icon}
-        />
+        <Ionicons name={icon} size={34} color={iconColor} style={styles.icon} />
         <Text style={styles.buttonLabel}>{label}</Text>
       </View>
     </FocusableButton>

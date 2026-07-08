@@ -1,13 +1,3 @@
-// App-wide error boundary.
-//
-// Catches render/lifecycle errors anywhere in the React tree below it and shows
-// a branded fallback instead of a white screen or a redbox in production.
-//
-// Caveats (React boundaries can't catch these): errors thrown in event
-// handlers, in async callbacks, or during SSR. TanStack Query errors surface
-// through query state by default; to route them here instead, set
-// `throwOnError: true` on a query — the QueryErrorResetBoundary in App.tsx will
-// then let "Try again" reset those queries.
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { FocusableButton } from "./FocusableButton";

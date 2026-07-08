@@ -1,13 +1,3 @@
-// TV-adapted VideoCard.
-//
-// Web-to-TV mapping:
-//   useInView (intersection observer)  →  isActive from onViewableItemsChanged
-//   double-tap like                    →  long-press SELECT (via useTVEventHandler)
-//   tap play/pause                     →  short SELECT press (isActive card)
-//   swipe-right side actions           →  D-pad RIGHT (tvOS geometric focus engine
-//                                         moves focus to the panel automatically —
-//                                         nextFocus* props are Android TV only)
-//   bottom overlay text                →  same, scaled up for 2m viewing distance
 import React, { useState, useEffect, useCallback } from "react";
 import {
   View,

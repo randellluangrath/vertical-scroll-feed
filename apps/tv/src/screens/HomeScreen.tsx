@@ -13,7 +13,6 @@ import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useContent } from "../hooks/useContent";
-import type { Content } from "../api/client";
 import { ContentRail } from "../components/ContentRail";
 import { DiscoverBanner } from "../components/DiscoverBanner";
 import { FocusableButton } from "../components/FocusableButton";

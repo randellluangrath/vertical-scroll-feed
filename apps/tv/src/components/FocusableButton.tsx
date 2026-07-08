@@ -1,11 +1,3 @@
-// Thin wrapper around TouchableHighlight that:
-// - applies a visible focus ring on tvOS (the platform focus engine handles hover)
-// - forwards all standard Touchable props
-//
-// Note on underlayColor: on tvOS, TouchableHighlight shows the underlay while
-// FOCUSED, not just while pressed. The default suits dark/translucent buttons;
-// light-filled buttons (e.g. the white primary CTA) must pass a light
-// underlay or they flash dark on focus.
 import React, { useState } from "react";
 import {
   TouchableHighlight,

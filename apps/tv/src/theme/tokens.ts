@@ -1,7 +1,3 @@
-// Design tokens — single source of truth for the TV app's visual language.
-// Values mirror the GoodWatch design system (dark surfaces, indigo accent).
-// When exporting real values from the Figma library, update this file only —
-// every screen and component reads from here.
 export const colors = {
   background: "#0A0A0F",
   surface: "#16161D",

@@ -6,7 +6,7 @@ remote-driven "Discover" feed plus a 10-foot landing page — backed by
 
 ```
 apps/tv/          Apple TV app (Expo SDK 57 + react-native-tvos 0.86 + React 19)
-amplify/          Amplify Gen 2 backend (AppSync + DynamoDB + Cognito)
+amplify/          Amplify Gen 2 backend (AppSync + DynamoDB, API-key auth)
 packages/shared/  Domain types + mock catalog data
 ```
 
@@ -22,7 +22,7 @@ packages/shared/  Domain types + mock catalog data
 npm install
 cd apps/tv && npm ci && cd ..
 
-# 2. Stand up the cloud backend (provisions AppSync + DynamoDB + Cognito,
+# 2. Stand up the cloud backend (provisions AppSync + DynamoDB,
 #    generates amplify_outputs.json). Leave running in its own terminal.
 npm run sandbox
 
