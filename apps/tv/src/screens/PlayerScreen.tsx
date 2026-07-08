@@ -9,6 +9,7 @@ import {
 import { useEvent } from "expo";
 import { useVideoPlayer, VideoView } from "expo-video";
 import { LinearGradient } from "expo-linear-gradient";
+import { Ionicons } from "@expo/vector-icons";
 import { StatusBar } from "expo-status-bar";
 import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";
 import type { RootStackParamList } from "../navigation/RootNavigator";
@@ -28,6 +29,20 @@ export function PlayerScreen() {
     p.timeUpdateEventInterval = 0.25; // seconds between timeUpdate events
     p.play();
   });
+
+  // Stop audio the moment we navigate away. useVideoPlayer does release the
+  // native player on unmount, but the release is deferred — the AVPlayer keeps
+  // playing through the pop transition (audible after exiting the screen).
+  // Pause explicitly on blur, and again in unmount cleanup as a backstop.
+  useEffect(() => {
+    const unsubscribe = navigation.addListener("blur", () => {
+      player.pause();
+    });
+    return () => {
+      unsubscribe();
+      player.pause();
+    };
+  }, [navigation, player]);
 
   const { isPlaying } = useEvent(player, "playingChange", {
     isPlaying: player.playing,
@@ -151,7 +166,11 @@ export function PlayerScreen() {
             </View>
             <View style={styles.timeRow}>
               <Text style={styles.timeLabel}>{formatTime(position)}</Text>
-              <Text style={styles.playState}>{isPlaying ? "▶" : "⏸"}</Text>
+              <Ionicons
+                name={isPlaying ? "pause" : "play"}
+                size={24}
+                color="#ffffff"
+              />
               <Text style={styles.timeLabel}>
                 -{formatTime(Math.max(0, duration - position))}
               </Text>
@@ -230,9 +249,5 @@ const styles = StyleSheet.create({
     color: "rgba(255,255,255,0.65)",
     fontSize: 16,
     fontWeight: "500",
-  },
-  playState: {
-    color: "#fff",
-    fontSize: 20,
   },
 });
