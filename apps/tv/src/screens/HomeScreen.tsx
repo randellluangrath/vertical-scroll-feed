@@ -1,11 +1,3 @@
-// HomeScreen — the landing page. Canonical 10-foot layout:
-//   brand bar → hero (featured title, full-bleed art, primary CTAs) → rails.
-//
-// The Discover vertical feed is reachable from the hero's second CTA —
-// it's an exploration surface now, not the front door.
-//
-// Focus flow: "Watch Now" gets initial focus. D-pad right → "Discover".
-// D-pad down → Trending rail → For You rail. Left/right within a rail.
 import React, { useCallback } from "react";
 import {
   View,
@@ -20,12 +12,15 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useContent } from "../hooks/useContent";
+import type { Content } from "../api/client";
 import { ContentRail } from "../components/ContentRail";
 import { DiscoverBanner } from "../components/DiscoverBanner";
 import { FocusableButton } from "../components/FocusableButton";
+import { SplashInterstitial } from "../components/SplashInterstitial";
 import type { RootStackParamList } from "../navigation/RootNavigator";
 import type { Content } from "../api/client";
 import { colors, spacing, radii, type as typeScale } from "../theme/tokens";
+import { BrandBar } from "src/components/BrandBar";
 
 const { height: SCREEN_H } = Dimensions.get("window");
 
@@ -46,24 +41,12 @@ export function HomeScreen() {
   );
 
   if (trending.loading || forYou.loading) {
-    return (
-      <View style={styles.center}>
-        <Text style={styles.brandMark}>
-          Good<Text style={styles.brandAccent}>Watch</Text>
-        </Text>
-        <Text style={styles.loadingText}>Loading…</Text>
-      </View>
-    );
+    return <SplashInterstitial message="Loading picks…" />;
   }
 
   if (trending.error || forYou.error) {
-    return (
-      <View style={styles.center}>
-        <Text style={styles.brandMark}>
-          Good<Text style={styles.brandAccent}>Watch</Text>
-        </Text>
-        <Text style={styles.errorText}>{trending.error ?? forYou.error}</Text>
-      </View>
+    throw new Error(
+      `Failed to load content: ${trending.error ?? forYou.error}`,
     );
   }
 
@@ -72,19 +55,16 @@ export function HomeScreen() {
   return (
     <View style={styles.container}>
       <StatusBar hidden />
+
+      {/* Fixed top nav — pinned outside the ScrollView so it never scrolls
+          off-screen and stays reachable when navigating focus back up. */}
+      <BrandBar onDiscover={openDiscover} />
+
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Brand bar */}
-        <View style={styles.brandBar}>
-          <Text style={styles.brandMark}>
-            Good<Text style={styles.brandAccent}>Watch</Text>
-          </Text>
-          <Text style={styles.brandTagline}>discover before you commit</Text>
-        </View>
-
         {/* Hero */}
         {hero && (
           <View style={styles.hero}>
@@ -175,36 +155,6 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: spacing.xxl,
   },
-  center: {
-    flex: 1,
-    backgroundColor: colors.background,
-    alignItems: "center",
-    justifyContent: "center",
-    padding: spacing.xxl,
-    gap: spacing.md,
-  },
-  brandBar: {
-    flexDirection: "row",
-    alignItems: "baseline",
-    gap: spacing.md,
-    paddingHorizontal: spacing.xxl,
-    paddingTop: spacing.xl,
-    paddingBottom: spacing.lg,
-  },
-  brandMark: {
-    color: colors.textPrimary,
-    fontSize: typeScale.heading,
-    fontWeight: "900",
-    letterSpacing: -1,
-  },
-  brandAccent: {
-    color: colors.brandStrong,
-  },
-  brandTagline: {
-    color: colors.textTertiary,
-    fontSize: typeScale.caption,
-    fontWeight: "500",
-  },
   hero: {
     height: SCREEN_H * 0.52,
     justifyContent: "flex-end",
@@ -281,16 +231,6 @@ const styles = StyleSheet.create({
   primaryButtonLabel: {
     color: "#000000",
     fontSize: typeScale.body,
-    fontWeight: "800",
-  },
-  loadingText: {
-    color: colors.textTertiary,
-    fontSize: typeScale.body,
-  },
-  errorText: {
-    color: colors.textSecondary,
-    fontSize: typeScale.body,
-    textAlign: "center",
-    lineHeight: 32,
+    fontWeight: "600",
   },
 });

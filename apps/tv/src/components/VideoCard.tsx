@@ -27,7 +27,6 @@ const { width: W } = Dimensions.get("window");
 
 type Props = {
   content: Content;
-  /** Exact card height — the Discover screen passes its measured viewport. */
   height: number;
   isActive: boolean;
   hasTVPreferredFocus?: boolean;

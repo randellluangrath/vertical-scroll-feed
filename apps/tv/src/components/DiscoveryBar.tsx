@@ -1,13 +1,9 @@
-// TV-adapted DiscoveryBar.
-// On the web this is a top overlay with horizontal scroll genre chips.
-// On TV the same structure works, but:
-//  - chips are FocusableButton instances navigable with D-pad left/right
-//  - active chip has a solid white background (high contrast for distance viewing)
-//  - font sizes are ~40% larger (TV sits 2-3m away, not 30cm)
 import React from "react";
 import { View, Text, ScrollView, StyleSheet } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import { useQueryClient } from "@tanstack/react-query";
 import { FocusableButton } from "./FocusableButton";
+import { contentQueryOptions } from "../hooks/useContent";
 
 type Rail = "for-you" | "trending";
 
@@ -31,6 +27,12 @@ export function DiscoveryBar({
   activeGenre,
   onGenreChange,
 }: Props) {
+  const queryClient = useQueryClient();
+
+  const prefetchGenre = (genre: string | null) => {
+    queryClient.prefetchQuery(contentQueryOptions({ rail, genre }));
+  };
+
   return (
     <LinearGradient
       colors={["rgba(0,0,0,0.80)", "rgba(0,0,0,0.40)", "transparent"]}
@@ -74,6 +76,7 @@ export function DiscoveryBar({
           label="All"
           active={activeGenre === null}
           onPress={() => onGenreChange(null)}
+          onFocus={() => prefetchGenre(null)}
         />
         {genres.map((g) => (
           <Chip
@@ -81,6 +84,7 @@ export function DiscoveryBar({
             label={g}
             active={activeGenre === g}
             onPress={() => onGenreChange(activeGenre === g ? null : g)}
+            onFocus={() => prefetchGenre(g)}
           />
         ))}
       </ScrollView>
@@ -92,14 +96,17 @@ function Chip({
   label,
   active,
   onPress,
+  onFocus,
 }: {
   label: string;
   active: boolean;
   onPress: () => void;
+  onFocus?: () => void;
 }) {
   return (
     <FocusableButton
       onPress={onPress}
+      onFocus={onFocus}
       style={[styles.chip, active && styles.chipActive]}
       accessibilityLabel={label}
     >

@@ -29,7 +29,7 @@ own content logic. A new device target starts by pointing at the same API.
 **2. The generated Amplify type is not the domain type.**
 Amplify Gen 2's `ClientSchema` produces nullable-everywhere types, splits
 `gradient` into `gradientFrom`/`gradientTo`, and exposes `reviews` as a lazy
-relationship. `apps/tv/src/api/amplify.ts` is an *anti-corruption layer*:
+relationship. `apps/tv/src/api/amplify.ts` is an _anti-corruption layer_:
 `toContent`/`toReview` map that shape into the clean domain types the UI speaks
 (`packages/shared`). The UI never imports an Amplify type. `createAmplifyApi`
 takes the client by injection and is typed against a minimal structural
@@ -66,9 +66,8 @@ Only `client.ts` knows a real Amplify client is behind it.
 
 1. `apps/<target>/` — new Expo app (mobile: plain `react-native`; Android TV:
    `react-native-tvos` builds it too).
-2. Reuse `api/amplify.ts` + `api/types.ts` — the adapter and mappers are
-   transport code, identical across targets. (Promote them to `packages/shared`
-   the first time a second client needs them.)
+2. Reuse `api/amplify.ts` — the adapter and mappers are
+   transport code, identical across targets.
 3. Reuse domain types from `packages/shared`.
 4. Write screens in that device's interaction idiom, styled from tokens.
 

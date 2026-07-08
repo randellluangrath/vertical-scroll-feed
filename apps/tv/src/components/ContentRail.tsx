@@ -1,7 +1,3 @@
-// ContentRail — a horizontal row of focusable poster cards, the standard
-// 10-foot browsing pattern. D-pad left/right moves along the rail (the
-// FlatList keeps the focused card in view), up/down moves between rails.
-// Focused card scales up and gains a focus ring.
 import React, { useRef, useState } from "react";
 import {
   View,
@@ -14,6 +10,7 @@ import {
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import type { Content } from "../api/client";
+import { prewarmStream } from "../api/prewarm";
 import { colors, spacing, radii, type as typeScale } from "../theme/tokens";
 
 const CARD_WIDTH = 400;
@@ -82,6 +79,7 @@ function PosterCard({
       onFocus={() => {
         setFocused(true);
         animate(1.08);
+        prewarmStream(content.streamUrl);
       }}
       onBlur={() => {
         setFocused(false);

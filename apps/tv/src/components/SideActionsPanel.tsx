@@ -104,7 +104,9 @@ function ActionButton({
       accessibilityLabel={accessibilityLabel}
     >
       <View style={styles.buttonInner}>
-        <Text style={[styles.icon, active && { color: activeColor }]}>{icon}</Text>
+        <Text style={[styles.icon, active && { color: activeColor }]}>
+          {icon}
+        </Text>
         <Text style={styles.buttonLabel}>{label}</Text>
       </View>
     </FocusableButton>

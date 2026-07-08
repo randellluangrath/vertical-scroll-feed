@@ -72,7 +72,6 @@ export interface AmplifyDataClient {
   models: {
     Content: {
       list(opts?: object): Promise<{ data: any[] }>;
-      get(id: string, opts?: object): Promise<{ data: any | null }>;
     };
     Review: {
       list(opts?: object): Promise<{ data: any[] }>;
@@ -118,12 +117,6 @@ export function createAmplifyApi(client: AmplifyDataClient): ContentApi {
         list.sort((a, b) => (a.trendingRank ?? 99) - (b.trendingRank ?? 99));
       }
       return list;
-    },
-    async getContentById(id: string): Promise<Content | null> {
-      const { data } = await client.models.Content.get(id, {
-        selectionSet: CONTENT_SELECTION,
-      });
-      return data ? toContent(data) : null;
     },
     async getReviews(contentId: string): Promise<Review[]> {
       const { data } = await client.models.Review.list({

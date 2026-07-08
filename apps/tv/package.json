@@ -17,6 +17,7 @@
     "@react-native-community/netinfo": "^11.4.1",
     "@react-navigation/native": "^6.1.18",
     "@react-navigation/native-stack": "^6.11.0",
+    "@tanstack/react-query": "^5.101.2",
     "aws-amplify": "^6.18.0",
     "expo": "~57.0.4",
     "expo-asset": "~57.0.3",

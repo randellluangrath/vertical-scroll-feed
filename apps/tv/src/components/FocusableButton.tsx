@@ -7,7 +7,11 @@
 // light-filled buttons (e.g. the white primary CTA) must pass a light
 // underlay or they flash dark on focus.
 import React, { useState } from "react";
-import { TouchableHighlight, TouchableHighlightProps, View } from "react-native";
+import {
+  TouchableHighlight,
+  TouchableHighlightProps,
+  View,
+} from "react-native";
 
 type Props = TouchableHighlightProps & {
   focusBorderColor?: string;
@@ -31,7 +35,7 @@ export function FocusableButton({
         focused && {
           borderColor: focusBorderColor,
           borderWidth: 3,
-          borderRadius: 8,
+          borderRadius: 12,
         },
       ]}
       underlayColor={underlayColor}

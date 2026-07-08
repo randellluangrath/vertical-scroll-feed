@@ -1,7 +1,3 @@
-// DiscoverBanner — a full-width, focusable section that owns the Discover
-// entry point. The vertical preview feed is a destination in its own right,
-// so it gets a branded banner between rails rather than a button squeezed
-// next to the hero's Watch Now CTA.
 import React, { useRef, useState } from "react";
 import {
   Text,

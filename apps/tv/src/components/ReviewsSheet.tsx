@@ -1,12 +1,3 @@
-// ReviewsSheet — the web app's reviews-as-comments experience, TV-adapted.
-// Community reactions surfaced next to the preview so viewers can "read the
-// room" before committing. Opens as a right-side panel (the TV idiom for
-// supplemental content — bottom sheets are a touch pattern).
-//
-// Focus: the Close button takes focus when the sheet opens. Each review row
-// is lightly focusable so D-pad up/down walks — and thereby scrolls — the
-// list. Select on Close (or the Menu button, via the parent unmounting on
-// blur navigation) dismisses.
 import React, { useState } from "react";
 import {
   View,
