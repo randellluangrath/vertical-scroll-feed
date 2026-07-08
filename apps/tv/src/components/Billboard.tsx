@@ -21,6 +21,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useIsFocused } from "@react-navigation/native";
 import type { Content } from "../api/client";
 import { FocusableButton } from "./FocusableButton";
+import { safePause, safePlay } from "../utils/safePlayer";
 import { colors, spacing, radii, type as typeScale } from "../theme/tokens";
 
 const { height: SCREEN_H } = Dimensions.get("window");
@@ -28,6 +29,10 @@ const { height: SCREEN_H } = Dimensions.get("window");
 type Props = {
   content: Content;
   onWatch: () => void;
+  /** Fires when the Watch Now CTA gains TV focus — the screen uses this to
+      scroll itself back to the top (the focus engine's own reveal only shows
+      the button, leaving the billboard clipped). */
+  onCtaFocus?: () => void;
   /** Give the Watch Now CTA initial focus (default true — it's the landing action). */
   hasTVPreferredFocus?: boolean;
 };
@@ -35,6 +40,7 @@ type Props = {
 export function Billboard({
   content,
   onWatch,
+  onCtaFocus,
   hasTVPreferredFocus = true,
 }: Props) {
   const player = useVideoPlayer(content.streamUrl, (p) => {
@@ -43,13 +49,14 @@ export function Billboard({
     p.play();
   });
 
-  // Pause when the Home screen is covered (e.g. by the Player); resume on return.
+  // Pause when the Home screen is covered (e.g. by the Player); resume on
+  // return. safePlay/safePause tolerate an already-released native player.
   const isFocused = useIsFocused();
   useEffect(() => {
     if (isFocused) {
-      player.play();
+      safePlay(player);
     } else {
-      player.pause();
+      safePause(player);
     }
   }, [player, isFocused]);
 
@@ -125,6 +132,7 @@ export function Billboard({
         <View style={styles.actions}>
           <FocusableButton
             onPress={onWatch}
+            onFocus={onCtaFocus}
             hasTVPreferredFocus={hasTVPreferredFocus}
             style={styles.primaryButton}
             focusBorderColor={colors.brandStrong}

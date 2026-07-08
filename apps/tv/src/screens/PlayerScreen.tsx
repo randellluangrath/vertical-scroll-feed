@@ -14,6 +14,7 @@ import { StatusBar } from "expo-status-bar";
 import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";
 import type { RootStackParamList } from "../navigation/RootNavigator";
 import { FocusableButton } from "../components/FocusableButton";
+import { safePause, safeToggle } from "../utils/safePlayer";
 
 const SEEK_SECONDS = 10;
 
@@ -34,13 +35,15 @@ export function PlayerScreen() {
   // native player on unmount, but the release is deferred — the AVPlayer keeps
   // playing through the pop transition (audible after exiting the screen).
   // Pause explicitly on blur, and again in unmount cleanup as a backstop.
+  // safePause: on pop, the hook's release can land BEFORE these callbacks, and
+  // pausing a released player throws "Unable to find the native shared object".
   useEffect(() => {
     const unsubscribe = navigation.addListener("blur", () => {
-      player.pause();
+      safePause(player);
     });
     return () => {
       unsubscribe();
-      player.pause();
+      safePause(player);
     };
   }, [navigation, player]);
 
@@ -85,11 +88,7 @@ export function PlayerScreen() {
       (event) => {
         showControls();
         if (event.eventType === "select" || event.eventType === "playPause") {
-          if (player.playing) {
-            player.pause();
-          } else {
-            player.play();
-          }
+          safeToggle(player);
         }
         if (event.eventType === "left") {
           player.seekBy(-SEEK_SECONDS);

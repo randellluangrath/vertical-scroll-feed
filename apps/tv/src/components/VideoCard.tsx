@@ -12,6 +12,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import type { Content } from "../api/client";
 import { SideActionsPanel } from "./SideActionsPanel";
 import { ReviewsSheet } from "./ReviewsSheet";
+import { safePause, safePlay, safeToggle } from "../utils/safePlayer";
 
 const { width: W } = Dimensions.get("window");
 
@@ -50,9 +51,9 @@ export function VideoCard({
   // partially on screen causes a visible frame-jump flicker.
   useEffect(() => {
     if (isActive && !reviewsOpen) {
-      player.play();
+      safePlay(player);
     } else {
-      player.pause();
+      safePause(player);
     }
   }, [player, isActive, reviewsOpen]);
 
@@ -64,11 +65,7 @@ export function VideoCard({
         if (!isActive || reviewsOpen) return;
         if (event.eventType === "select") {
           // Short press → play/pause toggle
-          if (player.playing) {
-            player.pause();
-          } else {
-            player.play();
-          }
+          safeToggle(player);
         }
         if (event.eventType === "longSelect") {
           setLiked((l) => !l);

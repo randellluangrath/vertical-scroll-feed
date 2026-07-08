@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useRef } from "react";
 import { View, ScrollView, StyleSheet } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useNavigation } from "@react-navigation/native";
@@ -19,6 +19,7 @@ export function HomeScreen() {
   const navigation = useNavigation<Nav>();
   const trending = useContent({ rail: "trending", genre: null });
   const forYou = useContent({ rail: "for-you", genre: null });
+  const scrollRef = useRef<ScrollView>(null);
 
   const openPlayer = useCallback(
     (content: Content) => navigation.navigate("Player", { content }),
@@ -28,6 +29,14 @@ export function HomeScreen() {
     () => navigation.navigate("Discover"),
     [navigation],
   );
+
+  // When focus walks back up to the billboard CTA, the focus engine's own
+  // scroll-to-reveal shows only the button, leaving the page stuck
+  // half-scrolled. Snap the whole ScrollView back to the top instead —
+  // same imperative-scroll pattern as the Discover feed.
+  const scrollToTop = useCallback(() => {
+    scrollRef.current?.scrollTo({ y: 0, animated: true });
+  }, []);
 
   if (trending.loading || forYou.loading) {
     return <SplashInterstitial message="Loading picks…" />;
@@ -50,12 +59,19 @@ export function HomeScreen() {
       <BrandBar onDiscover={openDiscover} />
 
       <ScrollView
+        ref={scrollRef}
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
         {/* Autoplaying billboard — muted preview of the featured title */}
-        {hero && <Billboard content={hero} onWatch={() => openPlayer(hero)} />}
+        {hero && (
+          <Billboard
+            content={hero}
+            onWatch={() => openPlayer(hero)}
+            onCtaFocus={scrollToTop}
+          />
+        )}
 
         {/* Rails */}
         <ContentRail
