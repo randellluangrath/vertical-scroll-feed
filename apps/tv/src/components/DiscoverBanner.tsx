@@ -7,6 +7,7 @@ import {
   Animated,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import { Ionicons } from "@expo/vector-icons";
 import { colors, spacing, radii, type as typeScale } from "../theme/tokens";
 
 type Props = {
@@ -62,7 +63,12 @@ export function DiscoverBanner({ onPress }: Props) {
               reviews, and save what grabs you.
             </Text>
           </View>
-          <Text style={styles.chevron}>›</Text>
+          <Ionicons
+            name="chevron-forward"
+            size={48}
+            color={colors.textPrimary}
+            style={styles.chevron}
+          />
         </Animated.View>
       </TouchableHighlight>
     </View>
@@ -113,9 +119,6 @@ const styles = StyleSheet.create({
     lineHeight: 24,
   },
   chevron: {
-    color: colors.textPrimary,
-    fontSize: 56,
-    fontWeight: "300",
     marginLeft: spacing.xl,
   },
 });

@@ -13,7 +13,6 @@ import {
   Dimensions,
   StyleSheet,
   Text,
-  ViewToken,
   LayoutChangeEvent,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
@@ -30,13 +29,17 @@ type Nav = NativeStackNavigationProp<RootStackParamList, "Discover">;
 
 export function DiscoverScreen() {
   const navigation = useNavigation<Nav>();
-  const [rail, setRail] = useState<"for-you" | "trending">("for-you");
-  const [genre, setGenre] = useState<string | null>(null);
+  const [rail, setRailState] = useState<"for-you" | "trending">("for-you");
+  const [genre, setGenreState] = useState<string | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   // Fall back to the window height until the first layout pass reports the truth.
   const [viewportHeight, setViewportHeight] = useState(
     Dimensions.get("window").height,
   );
+
+  const listRef = useRef<FlatList<Content>>(null);
+  const activeIndexRef = useRef(0);
+  const viewportHeightRef = useRef(viewportHeight);
 
   const { content, loading, error } = useContent({ rail, genre });
 
@@ -44,18 +47,39 @@ export function DiscoverScreen() {
     const h = e.nativeEvent.layout.height;
     // Ignore sub-pixel layout jitter — a state change here re-renders every
     // card, and video players flicker when torn down needlessly.
-    setViewportHeight((prev) => (h > 0 && Math.abs(h - prev) > 1 ? h : prev));
+    setViewportHeight((prev) => {
+      const next = h > 0 && Math.abs(h - prev) > 1 ? h : prev;
+      viewportHeightRef.current = next;
+      return next;
+    });
   }, []);
 
-  const viewabilityConfig = useRef({ itemVisiblePercentThreshold: 60 });
-  const onViewableItemsChanged = useCallback(
-    ({ viewableItems }: { viewableItems: ViewToken[] }) => {
-      if (viewableItems.length > 0) {
-        setActiveIndex(viewableItems[0].index ?? 0);
-      }
-    },
-    [],
-  );
+  // Focus-driven paging. The tvOS focus engine moves focus to the next card's
+  // surface on D-pad up/down, but its own scroll-to-reveal under-shoots by the
+  // safe-area (overscan) inset, leaving a sliver of the previous card visible.
+  // So focus is only the *signal* — we own the scroll, and snap the focused
+  // card exactly to the top of the viewport.
+  const handleCardFocus = useCallback((index: number) => {
+    if (activeIndexRef.current === index) return;
+    activeIndexRef.current = index;
+    setActiveIndex(index);
+    listRef.current?.scrollToOffset({
+      offset: index * viewportHeightRef.current,
+      animated: true,
+    });
+  }, []);
+
+  // Rail/genre changes remount the list — reset paging state to the top.
+  const setRail = useCallback((r: "for-you" | "trending") => {
+    activeIndexRef.current = 0;
+    setActiveIndex(0);
+    setRailState(r);
+  }, []);
+  const setGenre = useCallback((g: string | null) => {
+    activeIndexRef.current = 0;
+    setActiveIndex(0);
+    setGenreState(g);
+  }, []);
 
   const handlePress = useCallback(
     (item: Content) => {
@@ -87,6 +111,7 @@ export function DiscoverScreen() {
       <StatusBar hidden />
 
       <FlatList<Content>
+        ref={listRef}
         data={content}
         keyExtractor={(item) => item.id}
         renderItem={({ item, index }) => (
@@ -95,6 +120,7 @@ export function DiscoverScreen() {
             height={viewportHeight}
             isActive={index === activeIndex}
             hasTVPreferredFocus={index === 0}
+            onFocus={() => handleCardFocus(index)}
             onPress={() => handlePress(item)}
           />
         )}
@@ -104,8 +130,9 @@ export function DiscoverScreen() {
           index,
         })}
         showsVerticalScrollIndicator={false}
-        onViewableItemsChanged={onViewableItemsChanged}
-        viewabilityConfig={viewabilityConfig.current}
+        // Kill the automatic safe-area content inset — it's what made the
+        // focus engine's own scroll settle short of the card boundary.
+        contentInsetAdjustmentBehavior="never"
         // Remount only on rail/genre change (new result set, focus resets to
         // the first card). Height changes flow through extraData — a key
         // change here would tear down every video player mid-play (flicker).

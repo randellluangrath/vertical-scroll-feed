@@ -30,6 +30,9 @@ type Props = {
   height: number;
   isActive: boolean;
   hasTVPreferredFocus?: boolean;
+  /** Fires when the card's main surface gains TV focus — the screen uses this
+      to drive paging (imperative scrollToOffset). */
+  onFocus?: () => void;
   onPress: () => void;
 };
 
@@ -38,6 +41,7 @@ export function VideoCard({
   height,
   isActive,
   hasTVPreferredFocus,
+  onFocus,
   onPress,
 }: Props) {
   const [liked, setLiked] = useState(false);
@@ -139,6 +143,7 @@ export function VideoCard({
         style={StyleSheet.absoluteFill}
         underlayColor="transparent"
         hasTVPreferredFocus={hasTVPreferredFocus}
+        onFocus={onFocus}
         onPress={onPress}
         accessibilityLabel={`${content.title}. ${content.tagline}`}
       >

@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { LinearGradient } from "expo-linear-gradient";
+import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { useContent } from "../hooks/useContent";
@@ -18,9 +19,8 @@ import { DiscoverBanner } from "../components/DiscoverBanner";
 import { FocusableButton } from "../components/FocusableButton";
 import { SplashInterstitial } from "../components/SplashInterstitial";
 import type { RootStackParamList } from "../navigation/RootNavigator";
-import type { Content } from "../api/client";
 import { colors, spacing, radii, type as typeScale } from "../theme/tokens";
-import { BrandBar } from "src/components/BrandBar";
+import { BrandBar } from "../components/BrandBar";
 
 const { height: SCREEN_H } = Dimensions.get("window");
 
@@ -117,7 +117,10 @@ export function HomeScreen() {
                   underlayColor="#EDEDF7"
                   accessibilityLabel={`Watch ${hero.title} now`}
                 >
-                  <Text style={styles.primaryButtonLabel}>▶ Watch Now</Text>
+                  <View style={styles.primaryButtonInner}>
+                    <Ionicons name="play" size={22} color="#000000" />
+                    <Text style={styles.primaryButtonLabel}>Watch Now</Text>
+                  </View>
                 </FocusableButton>
               </View>
             </View>
@@ -227,6 +230,11 @@ const styles = StyleSheet.create({
     borderRadius: radii.md,
     paddingHorizontal: spacing.xl,
     paddingVertical: spacing.md,
+  },
+  primaryButtonInner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
   },
   primaryButtonLabel: {
     color: "#000000",

@@ -2,10 +2,16 @@
 // tvOS's geometric focus engine moves focus here on D-pad RIGHT from the
 // card surface, and back on D-pad LEFT — no explicit wiring needed
 // (nextFocus* props are Android TV APIs and don't exist on tvOS).
+//
+// Icons are Ionicons via @expo/vector-icons — filled variant when active,
+// outline when idle, matching the platform's visual language.
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { FocusableButton } from "./FocusableButton";
 import { colors, spacing, type as typeScale } from "../theme/tokens";
+
+type IoniconName = keyof typeof Ionicons.glyphMap;
 
 type Props = {
   likes: number;
@@ -37,42 +43,37 @@ export function SideActionsPanel({
   return (
     <View style={styles.panel} pointerEvents="box-none">
       <ActionButton
-        icon={liked ? "♥" : "♡"}
+        icon={liked ? "heart" : "heart-outline"}
+        iconColor={liked ? colors.like : colors.textPrimary}
         label={compactNumber(likes + (liked ? 1 : 0))}
-        active={liked}
-        activeColor={colors.like}
         onPress={onLike}
         accessibilityLabel={liked ? "Unlike" : "Like"}
       />
       <ActionButton
-        icon="💬"
+        icon="chatbubble-ellipses-outline"
+        iconColor={colors.textPrimary}
         label={`${reviewCount}`}
-        active={false}
-        activeColor={colors.textPrimary}
         onPress={onOpenReviews}
         accessibilityLabel={`Read ${reviewCount} reviews`}
       />
       <ActionButton
-        icon="★"
+        icon="star"
+        iconColor={colors.rating}
         label={rating.toFixed(1)}
-        active={false}
-        activeColor={colors.rating}
         onPress={onOpenReviews}
         accessibilityLabel={`Rating ${rating.toFixed(1)}, read reviews`}
       />
       <ActionButton
-        icon={saved ? "⊕" : "+"}
+        icon={saved ? "bookmark" : "bookmark-outline"}
+        iconColor={saved ? colors.brandStrong : colors.textPrimary}
         label={saved ? "Saved" : "My List"}
-        active={saved}
-        activeColor={colors.brand}
         onPress={onSave}
         accessibilityLabel={saved ? "Remove from list" : "Add to list"}
       />
       <ActionButton
-        icon="⇧"
+        icon="share-outline"
+        iconColor={colors.textPrimary}
         label="Share"
-        active={false}
-        activeColor={colors.textPrimary}
         onPress={() => {}}
         accessibilityLabel="Share"
       />
@@ -81,19 +82,17 @@ export function SideActionsPanel({
 }
 
 type ActionButtonProps = {
-  icon: string;
+  icon: IoniconName;
+  iconColor: string;
   label: string;
-  active: boolean;
-  activeColor: string;
   onPress: () => void;
   accessibilityLabel: string;
 };
 
 function ActionButton({
   icon,
+  iconColor,
   label,
-  active,
-  activeColor,
   onPress,
   accessibilityLabel,
 }: ActionButtonProps) {
@@ -104,9 +103,12 @@ function ActionButton({
       accessibilityLabel={accessibilityLabel}
     >
       <View style={styles.buttonInner}>
-        <Text style={[styles.icon, active && { color: activeColor }]}>
-          {icon}
-        </Text>
+        <Ionicons
+          name={icon}
+          size={34}
+          color={iconColor}
+          style={styles.icon}
+        />
         <Text style={styles.buttonLabel}>{label}</Text>
       </View>
     </FocusableButton>
@@ -119,7 +121,7 @@ const styles = StyleSheet.create({
     right: spacing.xl,
     bottom: 100,
     alignItems: "center",
-    gap: 28,
+    gap: spacing.lg,
   },
   button: {
     alignItems: "center",
@@ -127,11 +129,10 @@ const styles = StyleSheet.create({
   buttonInner: {
     alignItems: "center",
     gap: 6,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
   },
   icon: {
-    color: colors.textPrimary,
-    fontSize: 32,
-    lineHeight: 36,
     textShadowColor: "rgba(0,0,0,0.6)",
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 4,

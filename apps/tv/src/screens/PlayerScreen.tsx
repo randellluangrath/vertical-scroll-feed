@@ -138,13 +138,13 @@ export function PlayerScreen() {
             >
               <Text style={styles.backLabel}>← Back</Text>
             </FocusableButton>
-            <Text style={styles.topTitle}>{title}</Text>
+            <Text style={styles.topTitle}>{content.title}</Text>
           </View>
 
           {/* Bottom bar: progress + info */}
           <View style={styles.bottomBar} pointerEvents="none">
-            <Text style={styles.playerTitle}>{title}</Text>
-            <Text style={styles.playerTagline}>{tagline}</Text>
+            <Text style={styles.playerTitle}>{content.title}</Text>
+            <Text style={styles.playerTagline}>{content.tagline}</Text>
 
             {/* Progress bar */}
             <View style={styles.progressTrack}>
