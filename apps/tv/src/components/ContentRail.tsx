@@ -11,6 +11,7 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import type { Content } from "../api/client";
 import { prewarmStream } from "../api/prewarm";
+import { schedulePreload } from "../api/playerPool";
 import { colors, spacing, radii, type as typeScale } from "../theme/tokens";
 
 const CARD_WIDTH = 400;
@@ -79,7 +80,10 @@ function PosterCard({
       onFocus={() => {
         setFocused(true);
         animate(1.08);
+        // Warm the CDN immediately (cheap); if the user lingers, warm a full
+        // buffering player so SELECT starts playback near-instantly.
         prewarmStream(content.streamUrl);
+        schedulePreload(content.streamUrl);
       }}
       onBlur={() => {
         setFocused(false);

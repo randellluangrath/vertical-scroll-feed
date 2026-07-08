@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   View,
   Text,
@@ -7,13 +13,14 @@ import {
   useTVEventHandler,
 } from "react-native";
 import { useEvent } from "expo";
-import { useVideoPlayer, VideoView } from "expo-video";
+import { VideoView } from "expo-video";
 import { LinearGradient } from "expo-linear-gradient";
 import { Ionicons } from "@expo/vector-icons";
 import { StatusBar } from "expo-status-bar";
 import { useRoute, useNavigation, RouteProp } from "@react-navigation/native";
 import type { RootStackParamList } from "../navigation/RootNavigator";
 import { FocusableButton } from "../components/FocusableButton";
+import { acquirePlayer, releasePlayer } from "../api/playerPool";
 import { safePause, safeToggle } from "../utils/safePlayer";
 
 const SEEK_SECONDS = 10;
@@ -25,26 +32,29 @@ export function PlayerScreen() {
   const navigation = useNavigation();
   const { content } = route.params;
 
-  const player = useVideoPlayer(content.streamUrl, (p) => {
-    p.loop = true;
-    p.timeUpdateEventInterval = 0.25; // seconds between timeUpdate events
-    p.play();
-  });
+  // The player is owned by the pool, not by this screen's mount — it may already
+  // be warm (buffering) from a rail preload, which is the startup-time win.
+  const player = useMemo(
+    () => acquirePlayer(content.streamUrl),
+    [content.streamUrl],
+  );
 
-  // Stop audio the moment we navigate away. useVideoPlayer does release the
-  // native player on unmount, but the release is deferred — the AVPlayer keeps
-  // playing through the pop transition (audible after exiting the screen).
-  // Pause explicitly on blur, and again in unmount cleanup as a backstop.
-  // safePause: on pop, the hook's release can land BEFORE these callbacks, and
-  // pausing a released player throws "Unable to find the native shared object".
+  // Configure + start on mount; hand the player back to the pool on unmount
+  // (paused and kept warm for quick re-entry, reclaimed later via LRU).
   useEffect(() => {
-    const unsubscribe = navigation.addListener("blur", () => {
-      safePause(player);
-    });
-    return () => {
-      unsubscribe();
-      safePause(player);
-    };
+    player.muted = false;
+    player.loop = true;
+    player.timeUpdateEventInterval = 0.25; // seconds between timeUpdate events
+    player.currentTime = 0;
+    player.play();
+    return () => releasePlayer(content.streamUrl);
+  }, [player, content.streamUrl]);
+
+  // Also stop audio if we navigate away but stay mounted (e.g. a sheet over the
+  // player). safePause guards against a released native shared object.
+  useEffect(() => {
+    const unsubscribe = navigation.addListener("blur", () => safePause(player));
+    return unsubscribe;
   }, [navigation, player]);
 
   const { isPlaying } = useEvent(player, "playingChange", {

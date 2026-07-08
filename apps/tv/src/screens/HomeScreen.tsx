@@ -39,7 +39,7 @@ export function HomeScreen() {
   }, []);
 
   if (trending.loading || forYou.loading) {
-    return <SplashInterstitial message="Loading picks…" />;
+    return <SplashInterstitial message="Loading some good watches..." />;
   }
 
   if (trending.error || forYou.error) {
